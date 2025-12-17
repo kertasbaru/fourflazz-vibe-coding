@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
+import NotificationDropdown from '@/Components/NotificationDropdown';
 
 export default function DashboardLayout({ children }) {
     const { auth, flash } = usePage().props;
@@ -176,9 +177,7 @@ export default function DashboardLayout({ children }) {
                                 {auth.user?.formatted_balance || 'Rp 0'}
                             </span>
                         </div>
-                        <button className="size-10 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors relative">
-                            <span className="material-symbols-outlined">notifications</span>
-                        </button>
+                        <NotificationDropdown />
                         <Link
                             href={route('topup.index')}
                             className="h-10 px-4 bg-primary hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm shadow-blue-200 dark:shadow-none flex items-center gap-2 transition-colors"

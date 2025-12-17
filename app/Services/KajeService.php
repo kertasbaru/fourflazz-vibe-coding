@@ -273,4 +273,124 @@ class KajeService implements ProductProviderInterface
             ];
         }, $products);
     }
+
+    /**
+     * Check stock for a specific product.
+     */
+    public function checkStock(string $productCode): array
+    {
+        if (!$this->isEnabled()) {
+            return [
+                'success' => false,
+                'message' => 'KAJE provider is not enabled',
+            ];
+        }
+
+        $result = $this->makeRequest('/api/service/stock-product', [
+            'code' => $productCode,
+        ]);
+
+        if (!$result['success']) {
+            return [
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to check stock from KAJE',
+            ];
+        }
+
+        $data = $result['data'] ?? [];
+
+        if (isset($data['success']) && $data['success'] === true) {
+            $stockProducts = $data['data'] ?? [];
+
+            // Find our product in the response
+            $stockInfo = null;
+            foreach ($stockProducts as $item) {
+                if ($item['code'] === $productCode) {
+                    $stockInfo = $item;
+                    break;
+                }
+            }
+
+            if ($stockInfo) {
+                $status = $stockInfo['status'] ?? 'close';
+                $stock = $stockInfo['stock'] ?? 0;
+
+                // Determine stock status
+                $stockStatus = 'unknown';
+                if ($status === 'close') {
+                    $stockStatus = 'out_of_stock';
+                } elseif ($stock <= 0) {
+                    $stockStatus = 'out_of_stock';
+                } elseif ($stock < 10) {
+                    $stockStatus = 'limited';
+                } else {
+                    $stockStatus = 'available';
+                }
+
+                return [
+                    'success' => true,
+                    'data' => [
+                        'product_code' => $productCode,
+                        'stock' => $stock,
+                        'status' => $status,
+                        'stock_status' => $stockStatus,
+                    ],
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Product not found in stock check response',
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => $data['message'] ?? 'Failed to check stock from KAJE',
+        ];
+    }
+
+    /**
+     * Get products with stock and price only (for partial sync).
+     */
+    public function getProductsPriceAndStock(): array
+    {
+        // KAJE doesn't have a dedicated partial endpoint, so we use the full product list
+        // and extract only the necessary fields
+        $fullProducts = $this->getProducts();
+
+        if (!$fullProducts['success']) {
+            return $fullProducts;
+        }
+
+        $partialData = array_map(function ($product) {
+            $stock = $product['metadata']['stock'] ?? -1;
+            $status = $product['metadata']['status'] ?? 'close';
+
+            // Determine stock status
+            $stockStatus = 'unknown';
+            if ($status === 'close') {
+                $stockStatus = 'out_of_stock';
+            } elseif ($stock <= 0) {
+                $stockStatus = 'out_of_stock';
+            } elseif ($stock > 0 && $stock < 10) {
+                $stockStatus = 'limited';
+            } elseif ($stock >= 10) {
+                $stockStatus = 'available';
+            }
+
+            return [
+                'code' => $product['code'],
+                'price' => $product['price'],
+                'stock' => $stock,
+                'stock_status' => $stockStatus,
+            ];
+        }, $fullProducts['data'] ?? []);
+
+        return [
+            'success' => true,
+            'data' => $partialData,
+            'count' => count($partialData),
+        ];
+    }
 }

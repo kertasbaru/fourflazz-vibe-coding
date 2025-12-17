@@ -67,6 +67,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                         <tr className="border-b border-slate-200 dark:border-slate-700">
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Product</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Category</th>
+                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">API Source</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Price</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Selling Price</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
@@ -92,6 +93,15 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                                 <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400">
                                                     {product.category?.name}
                                                 </td>
+                                                <td className="py-4 px-4">
+                                                    {product.api_source ? (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                            {product.api_source}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">Manual</span>
+                                                    )}
+                                                </td>
                                                 <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400">
                                                     Rp {formatCurrency(product.price)}
                                                 </td>
@@ -100,8 +110,8 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${product.is_active
-                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
                                                         }`}>
                                                         {product.is_active ? 'Active' : 'Inactive'}
                                                     </span>

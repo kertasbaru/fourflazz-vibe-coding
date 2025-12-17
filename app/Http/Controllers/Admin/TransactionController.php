@@ -137,7 +137,7 @@ class TransactionController extends Controller
         if (!$trxId) {
             return response()->json([
                 'success' => false,
-                'message' => 'No external transaction ID found',
+                'message' => 'Cannot check status: This transaction does not have an external transaction ID from the provider. Please update the status manually.',
             ], 400);
         }
 
@@ -146,29 +146,68 @@ class TransactionController extends Controller
 
         if ($result['success']) {
             $newStatus = $result['data']['status'] ?? null;
+            $oldStatus = $transaction->status;
+            $refunded = false;
+            $refundAmount = 0;
 
-            if ($newStatus && $newStatus !== $transaction->status) {
+            if ($newStatus && $newStatus !== $oldStatus) {
                 $transaction->update([
                     'status' => $newStatus,
                     'serial_number' => $result['data']['serial_number'] ?? $transaction->serial_number,
                     'provider_response' => json_encode($result['data']),
                 ]);
+
+                // Handle refund if transaction failed
+                if ($newStatus === Transaction::STATUS_FAILED) {
+                    $paymentMethod = $notes['payment_method'] ?? null;
+                    if ($paymentMethod === 'BALANCE') {
+                        $transaction->user->increment('balance', (float) $transaction->amount);
+                        $refunded = true;
+                        $refundAmount = $transaction->amount;
+                    }
+                }
+
+                // Send notification to user
+                $transaction->load('product');
+                $transactionData = [
+                    'transaction_id' => $transaction->id,
+                    'reference_number' => $transaction->reference_number,
+                    'product_name' => $transaction->product?->name ?? 'Unknown Product',
+                    'phone_target' => $transaction->phone_target,
+                    'amount' => $transaction->amount,
+                    'amount_formatted' => 'Rp ' . number_format((float) $transaction->amount, 0, ',', '.'),
+                    'serial_number' => $result['data']['serial_number'] ?? null,
+                    'refunded' => $refunded,
+                ];
+
+                if ($newStatus === Transaction::STATUS_SUCCESS) {
+                    \App\Models\Notification::createTransactionSuccess($transaction->user_id, $transactionData);
+                } elseif ($newStatus === Transaction::STATUS_FAILED) {
+                    \App\Models\Notification::createTransactionFailed($transaction->user_id, $transactionData, $refunded);
+                }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Status checked successfully',
+                'message' => $oldStatus !== $newStatus
+                    ? "Status updated: {$oldStatus} → {$newStatus}" . ($refunded ? ' (balance refunded)' : '')
+                    : 'Status unchanged',
                 'data' => [
-                    'current_status' => $transaction->fresh()->status,
+                    'previous_status' => $oldStatus,
+                    'current_status' => $newStatus ?? $oldStatus,
+                    'status_changed' => $oldStatus !== $newStatus,
                     'api_status' => $result['data']['status'] ?? null,
                     'serial_number' => $result['data']['serial_number'] ?? null,
+                    'refunded' => $refunded,
+                    'refund_amount' => $refundAmount,
+                    'refund_amount_formatted' => $refunded ? 'Rp ' . number_format((float) $refundAmount, 0, ',', '.') : null,
                 ],
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => $result['message'],
+            'message' => $result['message'] ?? 'Failed to check transaction status',
         ], 400);
     }
 }

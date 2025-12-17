@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpSessionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -51,6 +52,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Purchases
     Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
     Route::get('/purchases/{product}/requirements', [PurchaseController::class, 'requirements'])->name('purchases.requirements');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 });
 
 // SanPay Callback (no auth required)
@@ -95,6 +102,13 @@ Route::prefix('admin')
         Route::get('providers/{provider}/products', [Admin\ProviderController::class, 'products'])->name('providers.products');
         Route::get('providers/{provider}/balance', [Admin\ProviderController::class, 'balance'])->name('providers.balance');
         Route::post('providers/{provider}/sync', [Admin\ProviderController::class, 'sync'])->name('providers.sync');
+        Route::post('providers/{provider}/partial-sync', [Admin\ProviderController::class, 'partialSync'])->name('providers.partial-sync');
+        Route::post('providers/{provider}/check-stock', [Admin\ProviderController::class, 'checkStock'])->name('providers.check-stock');
+        Route::post('providers/{provider}/refresh-balance', [Admin\ProviderController::class, 'refreshBalance'])->name('providers.refresh-balance');
+
+        // Settings
+        Route::get('settings', [Admin\SettingsController::class, 'index'])->name('settings.index');
+        Route::post('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
 
         // API Logs
         Route::get('api-logs', [Admin\ApiLogController::class, 'index'])->name('api-logs.index');

@@ -3,6 +3,84 @@ import { useState } from 'react';
 import axios from 'axios';
 import AdminLayout from '@/Layouts/AdminLayout';
 
+function CheckStatusResultModal({ isOpen, onClose, result, error }) {
+    if (!isOpen) return null;
+
+    const isSuccess = result?.success;
+    const data = result?.data;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-sm m-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className={`px-6 py-4 ${isSuccess ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-white text-2xl">
+                            {isSuccess ? 'check_circle' : 'error'}
+                        </span>
+                        <h3 className="text-lg font-bold text-white">
+                            {isSuccess ? 'Status Check Result' : 'Check Failed'}
+                        </h3>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                    {isSuccess ? (
+                        <>
+                            <div className="space-y-3">
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-slate-500">Status</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${data?.current_status === 'success' ? 'bg-emerald-100 text-emerald-700' :
+                                        data?.current_status === 'failed' ? 'bg-red-100 text-red-700' :
+                                            data?.current_status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-amber-100 text-amber-700'
+                                        }`}>
+                                        {data?.current_status}
+                                    </span>
+                                </div>
+                                {data?.status_changed && (
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-slate-500">Changed From</span>
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{data?.previous_status}</span>
+                                    </div>
+                                )}
+                                {data?.serial_number && (
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-slate-500">Serial Number</span>
+                                        <span className="text-sm font-mono text-slate-700 dark:text-slate-300">{data?.serial_number}</span>
+                                    </div>
+                                )}
+                                {data?.refunded && (
+                                    <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                        <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+                                            <span className="material-symbols-outlined text-lg">undo</span>
+                                            <span className="text-sm font-medium">Balance Refunded: {data?.refund_amount_formatted}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-sm text-slate-500">{result?.message}</p>
+                        </>
+                    ) : (
+                        <p className="text-sm text-red-600 dark:text-red-400">{error || result?.message || 'Failed to check status'}</p>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 pb-6">
+                    <button
+                        onClick={onClose}
+                        className="w-full py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function StatusUpdateModal({ isOpen, onClose, transaction, onSuccess }) {
     const [status, setStatus] = useState(transaction?.status || 'pending');
     const [notes, setNotes] = useState('');
@@ -82,6 +160,8 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
     const [selectedTx, setSelectedTx] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(null);
+    const [checkResult, setCheckResult] = useState({ isOpen: false, result: null, error: null });
+
 
     const handleFilter = (key, value) => {
         router.get(route('admin.transactions.index'), {
@@ -99,12 +179,16 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
         setCheckingStatus(tx.id);
         try {
             const response = await axios.post(route('admin.transactions.check-status', tx.id));
-            if (response.data.success) {
-                alert(`Status: ${response.data.data.current_status}\nSerial: ${response.data.data.serial_number || 'N/A'}`);
-                router.reload({ only: ['transactions'] });
+            setCheckResult({ isOpen: true, result: response.data, error: null });
+            if (response.data.data?.status_changed) {
+                router.reload({ only: ['transactions', 'stats'] });
             }
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to check status');
+            setCheckResult({
+                isOpen: true,
+                result: null,
+                error: error.response?.data?.message || 'Failed to check status'
+            });
         } finally {
             setCheckingStatus(null);
         }
@@ -231,7 +315,7 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                                                     Rp {formatCurrency(tx.amount)}
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[tx.status]}`}>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyles[tx.status]}`}>
                                                         {tx.status}
                                                     </span>
                                                 </td>
@@ -295,6 +379,13 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                 onClose={() => { setModalOpen(false); setSelectedTx(null); }}
                 transaction={selectedTx}
                 onSuccess={() => router.reload({ only: ['transactions', 'stats'] })}
+            />
+
+            <CheckStatusResultModal
+                isOpen={checkResult.isOpen}
+                onClose={() => setCheckResult({ isOpen: false, result: null, error: null })}
+                result={checkResult.result}
+                error={checkResult.error}
             />
         </AdminLayout>
     );

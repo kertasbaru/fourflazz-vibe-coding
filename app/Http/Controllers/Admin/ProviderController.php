@@ -175,13 +175,13 @@ class ProviderController extends Controller
             ], 400);
         }
 
-        // Get or create a default category for imported products
+        // Get or create "Others" category for imported products
         $defaultCategory = ProductCategory::firstOrCreate(
-            ['slug' => 'api-import'],
+            ['slug' => 'others'],
             [
-                'name' => 'API Import',
-                'description' => 'Products imported from API providers',
-                'icon' => 'cloud_download',
+                'name' => 'Others',
+                'description' => 'Other products',
+                'icon' => 'category',
                 'sort_order' => 99,
             ]
         );
@@ -209,21 +209,43 @@ class ProviderController extends Controller
                     ->where('external_code', $externalCode)
                     ->first();
 
+                // Detect operator from product name (XL, Telkomsel, AXIS, etc.)
+                $productName = $productData['name'] ?? 'Unknown Product';
+                $operator = $this->parseOperatorFromName($productName);
+
+                // Determine stock status
+                $stock = $productData['metadata']['stock'] ?? -1;
+                $status = $productData['metadata']['status'] ?? 'open';
+                $stockStatus = 'unknown';
+                if ($status === 'close') {
+                    $stockStatus = 'out_of_stock';
+                } elseif ($stock <= 0) {
+                    $stockStatus = 'out_of_stock';
+                } elseif ($stock > 0 && $stock < 10) {
+                    $stockStatus = 'limited';
+                } elseif ($stock >= 10) {
+                    $stockStatus = 'available';
+                }
+
                 $productFields = [
-                    'name' => $productData['name'] ?? 'Unknown Product',
+                    'name' => $productName,
                     'slug' => Str::slug($productData['name'] ?? 'product') . '-' . Str::lower($provider) . '-' . Str::random(4),
                     'description' => $productData['description'] ?? null,
                     'price' => $productData['price'] ?? 0,
-                    'selling_price' => ($productData['price'] ?? 0) * 1.1, // 10% markup as default
-                    'provider' => $productData['metadata']['brands'][0] ?? strtoupper($provider),
+                    'selling_price' => ($productData['price'] ?? 0) * (1 + (\App\Models\Setting::get('product_margin', 10) / 100)),
+                    'provider' => $operator, // Operator (XL, Telkomsel, AXIS, etc.)
                     'product_code' => $externalCode,
-                    'api_source' => $provider,
+                    'api_source' => $provider, // API Provider (KMSP, KAJET, etc.)
                     'external_code' => $externalCode,
                     'api_metadata' => $productData['metadata'] ?? [],
                     'type' => $productData['metadata']['type'] ?? 'prepaid',
-                    'stock' => $productData['metadata']['stock'] ?? -1,
-                    'is_active' => ($productData['metadata']['status'] ?? 'open') === 'open',
+                    'stock' => $stock,
+                    'stock_status' => $stockStatus,
+                    'is_active' => $status === 'open',
                     'category_id' => $defaultCategory->id,
+                    // KAJE-specific fields
+                    'brands' => $productData['metadata']['brands'] ?? null,
+                    'prefixes' => $productData['metadata']['prefix'] ?? null,
                 ];
 
                 if ($existingProduct) {
@@ -265,6 +287,77 @@ class ProviderController extends Controller
     }
 
     /**
+     * Parse operator/carrier name from product name.
+     * Detects telecom operators like XL, Telkomsel, AXIS, Indosat, Tri, etc.
+     */
+    protected function parseOperatorFromName(string $productName): string
+    {
+        $productNameLower = strtolower($productName);
+
+        // Telkomsel variants
+        if (str_contains($productNameLower, 'telkomsel') || str_contains($productNameLower, 'tsel')) {
+            return 'Telkomsel';
+        }
+
+        // XL variants
+        if (preg_match('/\bxl\b/i', $productName) || str_contains($productNameLower, 'xtra')) {
+            return 'XL';
+        }
+
+        // AXIS
+        if (str_contains($productNameLower, 'axis')) {
+            return 'AXIS';
+        }
+
+        // LiveOn (XL subsidiary)
+        if (str_contains($productNameLower, 'liveon') || str_contains($productNameLower, 'live on')) {
+            return 'LiveOn';
+        }
+
+        // Indosat/IM3/Ooredoo
+        if (str_contains($productNameLower, 'indosat') || str_contains($productNameLower, 'im3') || str_contains($productNameLower, 'ooredoo')) {
+            return 'Indosat';
+        }
+
+        // Tri/3 (Three)
+        if (preg_match('/\btri\b|\bthree\b|^3\s/i', $productName)) {
+            return 'Tri';
+        }
+
+        // Smartfren
+        if (str_contains($productNameLower, 'smartfren') || str_contains($productNameLower, 'smart')) {
+            return 'Smartfren';
+        }
+
+        // by.U (Telkomsel digital)
+        if (str_contains($productNameLower, 'by.u') || str_contains($productNameLower, 'byu')) {
+            return 'by.U';
+        }
+
+        // PLN (Electricity)
+        if (str_contains($productNameLower, 'pln') || str_contains($productNameLower, 'listrik')) {
+            return 'PLN';
+        }
+
+        // E-Wallet detections
+        if (str_contains($productNameLower, 'dana')) {
+            return 'DANA';
+        }
+        if (str_contains($productNameLower, 'gopay')) {
+            return 'GoPay';
+        }
+        if (str_contains($productNameLower, 'ovo')) {
+            return 'OVO';
+        }
+        if (str_contains($productNameLower, 'shopeepay')) {
+            return 'ShopeePay';
+        }
+
+        // Default: Unknown operator
+        return 'Other';
+    }
+
+    /**
      * Get all products from all enabled providers (API endpoint).
      */
     public function allProducts(): JsonResponse
@@ -275,5 +368,200 @@ class ProviderController extends Controller
             'success' => true,
             'data' => $allProducts,
         ]);
+    }
+
+    /**
+     * Partial sync - update only stock and price for existing products.
+     */
+    public function partialSync(Request $request, string $provider): JsonResponse
+    {
+        if (!$this->providerFactory->hasProvider($provider)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Provider '{$provider}' is not registered.",
+            ], 404);
+        }
+
+        $providerInstance = $this->providerFactory->getProvider($provider);
+
+        if (!$providerInstance->isEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Provider '{$provider}' is disabled.",
+            ], 400);
+        }
+
+        // Fetch partial product data (stock & price only)
+        $result = $providerInstance->getProductsPriceAndStock();
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to fetch product data',
+            ], 400);
+        }
+
+        $products = $result['data'] ?? [];
+
+        if (empty($products)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No products returned from provider',
+            ], 400);
+        }
+
+        $stats = [
+            'updated' => 0,
+            'skipped' => 0,
+            'not_found' => 0,
+        ];
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($products as $productData) {
+                $externalCode = $productData['code'] ?? null;
+
+                if (empty($externalCode)) {
+                    $stats['skipped']++;
+                    continue;
+                }
+
+                // Find existing product
+                $existingProduct = Product::where('api_source', $provider)
+                    ->where('external_code', $externalCode)
+                    ->first();
+
+                if (!$existingProduct) {
+                    $stats['not_found']++;
+                    continue;
+                }
+
+                // Calculate new selling price with margin
+                $newPrice = $productData['price'] ?? $existingProduct->price;
+                $margin = \App\Models\Setting::get('product_margin', 10) / 100;
+                $newSellingPrice = $newPrice * (1 + $margin);
+
+                // Update only stock, price, and stock_status
+                $existingProduct->update([
+                    'price' => $newPrice,
+                    'selling_price' => $newSellingPrice,
+                    'stock' => $productData['stock'] ?? $existingProduct->stock,
+                    'stock_status' => $productData['stock_status'] ?? $existingProduct->stock_status,
+                    'last_stock_check_at' => now(),
+                ]);
+
+                $stats['updated']++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Partial sync completed. Updated: {$stats['updated']}, Not Found: {$stats['not_found']}, Skipped: {$stats['skipped']}",
+                'stats' => $stats,
+                'total_from_api' => count($products),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error("Partial sync error for {$provider}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => "Partial sync failed: {$e->getMessage()}",
+            ], 500);
+        }
+    }
+
+    /**
+     * Check stock for specific products.
+     */
+    public function checkStock(Request $request, string $provider): JsonResponse
+    {
+        $request->validate([
+            'product_codes' => 'required|array|min:1',
+            'product_codes.*' => 'required|string',
+        ]);
+
+        if (!$this->providerFactory->hasProvider($provider)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Provider '{$provider}' is not registered.",
+            ], 404);
+        }
+
+        $providerInstance = $this->providerFactory->getProvider($provider);
+
+        if (!$providerInstance->isEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Provider '{$provider}' is disabled.",
+            ], 400);
+        }
+
+        $productCodes = $request->product_codes;
+        $results = [];
+        $errors = [];
+
+        foreach ($productCodes as $code) {
+            $stockResult = $providerInstance->checkStock($code);
+
+            if ($stockResult['success']) {
+                $results[] = $stockResult['data'];
+            } else {
+                $errors[] = [
+                    'product_code' => $code,
+                    'error' => $stockResult['message'] ?? 'Unknown error',
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => count($results) > 0,
+            'data' => $results,
+            'errors' => $errors,
+            'total_checked' => count($productCodes),
+            'successful' => count($results),
+            'failed' => count($errors),
+        ]);
+    }
+
+    /**
+     * Refresh balance from provider API.
+     */
+    public function refreshBalance(string $provider): JsonResponse
+    {
+        if (!$this->providerFactory->hasProvider($provider)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Provider '{$provider}' is not registered.",
+            ], 404);
+        }
+
+        $providerInstance = $this->providerFactory->getProvider($provider);
+
+        if (!$providerInstance->isEnabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Provider '{$provider}' is disabled.",
+            ], 400);
+        }
+
+        // Force refresh balance (bypassing any cache)
+        $result = $providerInstance->getBalance();
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to refresh balance',
+            ], 400);
+        }
+
+        return response()->json($result, 200);
     }
 }

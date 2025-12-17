@@ -2,7 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
-function ProviderCard({ provider, onFetchProducts, onCheckBalance, onSync, loading }) {
+function ProviderCard({ provider, onFetchProducts, onCheckBalance, onSync, onPartialSync, onRefreshBalance, loading, balance }) {
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -33,32 +33,62 @@ function ProviderCard({ provider, onFetchProducts, onCheckBalance, onSync, loadi
                 </div>
             </div>
 
+            {/* Balance Display */}
+            {balance && balance[provider.name] && (
+                <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Balance</p>
+                            <p className="text-lg font-bold text-blue-900 dark:text-blue-300">
+                                {balance[provider.name].balance_formatted || 'N/A'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => onRefreshBalance(provider.name)}
+                            disabled={!provider.enabled || loading}
+                            className="p-2 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Refresh balance"
+                        >
+                            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[20px]">refresh</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col gap-2 mt-4">
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-2">
                     <button
                         onClick={() => onFetchProducts(provider.name)}
                         disabled={!provider.enabled || loading}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span className="material-symbols-outlined text-[18px]">inventory_2</span>
-                        <span className="text-sm font-medium">Fetch Products</span>
+                        <span className="text-sm font-medium">Products</span>
                     </button>
                     <button
                         onClick={() => onCheckBalance(provider.name)}
                         disabled={!provider.enabled || loading}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
-                        <span className="text-sm font-medium">Check Balance</span>
+                        <span className="text-sm font-medium">Balance</span>
                     </button>
                 </div>
                 <button
-                    onClick={() => onSync(provider.name)}
+                    onClick={() => onSync(provider.name, 'full')}
+                    disabled={!provider.enabled || loading}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span className="material-symbols-outlined text-[18px]">sync</span>
+                    <span className="text-sm font-medium">Full Sync</span>
+                </button>
+                <button
+                    onClick={() => onPartialSync(provider.name)}
                     disabled={!provider.enabled || loading}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <span className="material-symbols-outlined text-[18px]">sync</span>
-                    <span className="text-sm font-medium">Sync to Database</span>
+                    <span className="material-symbols-outlined text-[18px]">update</span>
+                    <span className="text-sm font-medium">Partial Sync (Stock & Price)</span>
                 </button>
             </div>
         </div>
@@ -164,6 +194,7 @@ export default function ProvidersIndex({ providers }) {
     const [modalData, setModalData] = useState(null);
     const [modalError, setModalError] = useState(null);
     const [modalSuccess, setModalSuccess] = useState(false);
+    const [balances, setBalances] = useState({});
 
     const fetchProducts = async (providerName) => {
         setLoading(true);
@@ -215,11 +246,52 @@ export default function ProvidersIndex({ providers }) {
             if (data.success) {
                 setModalData(data);
                 setModalSuccess(true);
+                // Cache the balance
+                setBalances(prev => ({
+                    ...prev,
+                    [providerName]: data.data
+                }));
             } else {
                 setModalError(data.message || 'Failed to check balance');
             }
         } catch (error) {
             setModalError('Network error: Unable to connect to the server. Please check your connection.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const refreshBalance = async (providerName) => {
+        setLoading(true);
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            const response = await fetch(`/admin/providers/${providerName}/refresh-balance`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                },
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // Update cached balance
+                setBalances(prev => ({
+                    ...prev,
+                    [providerName]: data.data
+                }));
+            } else {
+                setModalOpen(true);
+                setModalTitle('Error');
+                setModalError(data.message || 'Failed to refresh balance');
+            }
+        } catch (error) {
+            setModalOpen(true);
+            setModalTitle('Error');
+            setModalError('Network error: Unable to refresh balance.');
         } finally {
             setLoading(false);
         }
@@ -256,6 +328,45 @@ export default function ProvidersIndex({ providers }) {
                 }, 1500);
             } else {
                 setModalError(data.message || 'Failed to sync products');
+            }
+        } catch (error) {
+            setModalError('Network error: Unable to connect to the server. Please check your connection.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const partialSync = async (providerName) => {
+        setLoading(true);
+        setModalOpen(true);
+        setModalTitle(`Partial sync from ${providerName.toUpperCase()}`);
+        setModalData(null);
+        setModalError(null);
+        setModalSuccess(false);
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            const response = await fetch(`/admin/providers/${providerName}/partial-sync`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                },
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setModalData(data);
+                setModalSuccess(true);
+                // Refresh the page to update data
+                setTimeout(() => {
+                    router.reload({ only: ['providers'] });
+                }, 1500);
+            } else {
+                setModalError(data.message || 'Failed to sync stock and prices');
             }
         } catch (error) {
             setModalError('Network error: Unable to connect to the server. Please check your connection.');
@@ -304,7 +415,10 @@ KAJE_API_KEY=your_kaje_api_key`}
                             onFetchProducts={fetchProducts}
                             onCheckBalance={checkBalance}
                             onSync={syncProducts}
+                            onPartialSync={partialSync}
+                            onRefreshBalance={refreshBalance}
                             loading={loading}
+                            balance={balances}
                         />
                     ))}
                 </div>

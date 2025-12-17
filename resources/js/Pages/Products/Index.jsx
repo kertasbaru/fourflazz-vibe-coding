@@ -94,8 +94,8 @@ export default function ProductsIndex({ products, categories, providers, filters
                             handleFilter('category', '');
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${!selectedCategory
-                                ? 'bg-primary text-white'
-                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            ? 'bg-primary text-white'
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                             }`}
                     >
                         All Products
@@ -108,8 +108,8 @@ export default function ProductsIndex({ products, categories, providers, filters
                                 handleFilter('category', category.slug);
                             }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${selectedCategory === category.slug
-                                    ? 'bg-primary text-white'
-                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-primary text-white'
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-[18px]">{category.icon || 'category'}</span>
@@ -128,8 +128,8 @@ export default function ProductsIndex({ products, categories, providers, filters
                                 handleFilter('provider', '');
                             }}
                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${!selectedProvider
-                                    ? 'bg-primary text-white'
-                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-primary text-white'
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                                 }`}
                         >
                             All
@@ -142,8 +142,8 @@ export default function ProductsIndex({ products, categories, providers, filters
                                     handleFilter('provider', provider);
                                 }}
                                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${selectedProvider === provider
-                                        ? 'bg-primary text-white'
-                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                                     }`}
                             >
                                 {provider}
@@ -169,10 +169,10 @@ export default function ProductsIndex({ products, categories, providers, filters
                                         key={index}
                                         href={link.url || '#'}
                                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${link.active
-                                                ? 'bg-primary text-white'
-                                                : link.url
-                                                    ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                            ? 'bg-primary text-white'
+                                            : link.url
+                                                ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                                             }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />

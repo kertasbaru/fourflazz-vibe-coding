@@ -31,4 +31,19 @@ interface ProductProviderInterface
      * @return bool
      */
     public function isEnabled(): bool;
+
+    /**
+     * Check stock for a specific product.
+     *
+     * @param string $productCode
+     * @return array{success: bool, data?: array, message?: string}
+     */
+    public function checkStock(string $productCode): array;
+
+    /**
+     * Get products with stock and price only (for partial sync).
+     *
+     * @return array{success: bool, data?: array, message?: string}
+     */
+    public function getProductsPriceAndStock(): array;
 }

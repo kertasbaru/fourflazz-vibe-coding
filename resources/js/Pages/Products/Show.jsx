@@ -188,8 +188,6 @@ export default function ProductShow({ product, relatedProducts }) {
         setTransactionData(null);
     };
 
-    const isKmspProduct = product.api_source === 'kmsp';
-
     return (
         <DashboardLayout>
             <Head title={product.name} />
@@ -212,52 +210,70 @@ export default function ProductShow({ product, relatedProducts }) {
                 {/* Product Card */}
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8">
-                        <div className="flex items-start gap-6">
-                            <div className="size-16 md:size-20 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-primary text-[32px] md:text-[40px]">
-                                    {product.category?.icon || 'inventory_2'}
-                                </span>
+                        <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+                            {/* Icon */}
+                            <div className="flex-shrink-0">
+                                <div className="size-16 md:size-20 bg-primary/10 rounded-2xl flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-primary text-[32px] md:text-[40px]">
+                                        {product.category?.icon || 'inventory_2'}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                                                {product.category?.name}
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-col gap-4">
+                                    {/* Badges */}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                            {product.category?.name}
+                                        </span>
+                                        {requiresOtp && (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                Requires OTP
                                             </span>
-                                            {isKmspProduct && (
-                                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                    KMSP
-                                                </span>
-                                            )}
-                                            {requiresOtp && (
-                                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                    Requires OTP
-                                                </span>
-                                            )}
-                                        </div>
-                                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
+                                        )}
+                                    </div>
+
+                                    {/* Title & Provider */}
+                                    <div>
+                                        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white leading-tight break-words">
                                             {product.name}
                                         </h1>
                                         {product.provider && (
-                                            <p className="text-slate-500 mt-1">{product.provider}</p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">Provider</span>
+                                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{product.provider}</span>
+                                            </div>
                                         )}
                                     </div>
+
+                                    {/* Description */}
+                                    {product.description && (
+                                        <div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 whitespace-pre-line bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
+                                            {product.description}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Price Section - Desktop & Mobile optimized */}
+                            <div className="flex-shrink-0 md:text-right border-t md:border-t-0 border-slate-100 dark:border-slate-700 pt-4 md:pt-0 mt-2 md:mt-0">
+                                <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-2">
                                     <div className="text-right">
+                                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Price</p>
                                         <p className="text-3xl font-bold text-primary">
                                             Rp {new Intl.NumberFormat('id-ID').format(product.selling_price)}
                                         </p>
-                                        <p className="text-sm text-slate-500 mt-1">
-                                            Balance: Rp {new Intl.NumberFormat('id-ID').format(auth.user.balance || 0)}
+                                    </div>
+                                    <div className="hidden md:block h-px w-full bg-slate-100 dark:bg-slate-800 my-2"></div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Your Balance</p>
+                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                            Rp {new Intl.NumberFormat('id-ID').format(auth.user.balance || 0)}
                                         </p>
                                     </div>
                                 </div>
-
-                                {product.description && (
-                                    <p className="text-slate-600 dark:text-slate-400 mt-4 whitespace-pre-line">
-                                        {product.description}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </div>

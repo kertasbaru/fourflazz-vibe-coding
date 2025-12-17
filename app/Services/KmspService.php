@@ -20,6 +20,7 @@ class KmspService implements ProductProviderInterface
     protected const OTP_LOGIN_URL = 'https://golang-openapi-login-xltembakservice.kmsp-store.com';
     protected const ACCESS_TOKEN_LIST_URL = 'https://golang-openapi-accesstokenlist-xltembakservice.kmsp-store.com';
     protected const PURCHASE_URL = 'https://golang-openapi-packagepurchase-xltembakservice.kmsp-store.com';
+    protected const CHECK_TRANSACTION_URL = 'https://golang-openapi-checktransaction-xltembakservice.kmsp-store.com';
 
     public function __construct()
     {
@@ -96,14 +97,46 @@ class KmspService implements ProductProviderInterface
 
     /**
      * Get account balance from KMSP.
-     * Note: KMSP does not have a balance endpoint.
      */
     public function getBalance(): array
     {
-        return [
-            'success' => false,
-            'message' => 'Balance check is not supported by KMSP provider',
-        ];
+        if (!$this->isEnabled()) {
+            return [
+                'success' => false,
+                'message' => 'KMSP provider is not enabled',
+            ];
+        }
+
+        try {
+            $logged = $this->makeLoggedRequest('GET', 'https://golang-openapi-panelaccountbalance-xltembakservice.kmsp-store.com/v1', [
+                'api_key' => $this->apiKey,
+            ], 'balance');
+
+            $result = $logged['result'];
+
+            if ($logged['success']) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'balance' => $result['data']['balance'] ?? 0,
+                        'balance_formatted' => 'Rp ' . number_format($result['data']['balance'] ?? 0, 0, ',', '.'),
+                    ],
+                    'raw' => $result,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to fetch balance from KMSP',
+                'code' => $result['code'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            Log::error('KMSP balance check error', ['error' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'message' => 'KMSP balance check failed: ' . $e->getMessage(),
+            ];
+        }
     }
 
     // =====================================================
@@ -519,9 +552,8 @@ class KmspService implements ProductProviderInterface
         }
 
         try {
-            // KMSP uses the same purchase endpoint with check_status parameter
             $response = Http::timeout($this->timeout)
-                ->get(self::PURCHASE_URL . '/v1/status', [
+                ->get(self::CHECK_TRANSACTION_URL . '/v1', [
                     'api_key' => $this->apiKey,
                     'trx_id' => $trxId,
                 ]);
@@ -531,8 +563,8 @@ class KmspService implements ProductProviderInterface
             if ($response->successful() && isset($result['status']) && $result['status'] === true) {
                 $data = $result['data'] ?? [];
 
-                // Map KMSP status to our internal status
-                $mappedStatus = $this->mapTransactionStatus($data['status'] ?? 'unknown');
+                // Map KMSP status codes: 1=success, 2=pending, 0=failed
+                $mappedStatus = $this->mapTransactionStatusCode($data['status'] ?? null);
 
                 return [
                     'success' => true,
@@ -540,9 +572,18 @@ class KmspService implements ProductProviderInterface
                     'data' => [
                         'trx_id' => $data['trx_id'] ?? $trxId,
                         'status' => $mappedStatus,
-                        'original_status' => $data['status'] ?? 'unknown',
-                        'serial_number' => $data['serial_number'] ?? null,
-                        'message' => $data['message'] ?? null,
+                        'original_status' => $data['status'] ?? null,
+                        'serial_number' => $data['sn_only'] ?? null,
+                        'sn_and_info' => $data['sn_and_info'] ?? null,
+                        'is_refunded' => ($data['is_refunded'] ?? 0) === 1,
+                        'refund_amount' => $data['refund_amount'] ?? 0,
+                        'refund_reason' => $data['refund_reason'] ?? '',
+                        'rc' => $data['rc'] ?? null,
+                        'rc_message' => $data['rc_message'] ?? null,
+                        'have_deeplink' => $data['have_deeplink'] ?? false,
+                        'deeplink_url' => $data['deeplink_url'] ?? '',
+                        'is_qris' => $data['is_qris'] ?? false,
+                        'qris_data' => $data['qris_data'] ?? [],
                     ],
                 ];
             }
@@ -552,12 +593,26 @@ class KmspService implements ProductProviderInterface
                 'message' => $result['message'] ?? 'Failed to get transaction status',
             ];
         } catch (\Exception $e) {
-            Log::error('KMSP transaction status check error', ['error' => $e->getMessage()]);
+            Log::error('KMSP transaction status check error', ['error' => $e->getMessage(), 'trx_id' => $trxId]);
             return [
                 'success' => false,
                 'message' => 'Failed to check status: ' . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Map KMSP status code to internal status.
+     * KMSP uses: 1=success, 2=pending, 0=failed
+     */
+    protected function mapTransactionStatusCode(?int $statusCode): string
+    {
+        return match ($statusCode) {
+            1 => 'success',
+            2 => 'processing',
+            0 => 'failed',
+            default => 'processing',
+        };
     }
 
     /**
@@ -572,6 +627,82 @@ class KmspService implements ProductProviderInterface
             'refunded', 'refund' => 'refunded',
             default => 'processing',
         };
+    }
+
+    /**
+     * Check stock for a specific product.
+     */
+    public function checkStock(string $productCode): array
+    {
+        if (!$this->isEnabled()) {
+            return [
+                'success' => false,
+                'message' => 'KMSP provider is not enabled',
+            ];
+        }
+
+        try {
+            $logged = $this->makeLoggedRequest('GET', 'https://golang-openapi-checkpackagestock-xltembakservice.kmsp-store.com/v1', [
+                'api_key' => $this->apiKey,
+                'package_id' => $productCode,
+            ], 'check-stock');
+
+            $result = $logged['result'];
+
+            if ($logged['success']) {
+                $stockData = $result['data'] ?? [];
+
+                return [
+                    'success' => true,
+                    'data' => [
+                        'product_code' => $productCode,
+                        'real_stock' => $stockData['real_stock'] ?? 0,
+                        'is_out_of_stock' => $stockData['is_out_of_stock'] ?? false,
+                        'stock_status' => ($stockData['is_out_of_stock'] ?? false) ? 'out_of_stock' : 'available',
+                    ],
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to check stock',
+            ];
+        } catch (\Exception $e) {
+            Log::error('KMSP stock check error', ['error' => $e->getMessage(), 'product_code' => $productCode]);
+            return [
+                'success' => false,
+                'message' => 'Stock check failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get products with stock and price only (for partial sync).
+     */
+    public function getProductsPriceAndStock(): array
+    {
+        // KMSP doesn't have a dedicated partial endpoint, so we use the full product list
+        // and extract only the necessary fields
+        $fullProducts = $this->getProducts();
+
+        if (!$fullProducts['success']) {
+            return $fullProducts;
+        }
+
+        $partialData = array_map(function ($product) {
+            return [
+                'code' => $product['code'],
+                'price' => $product['price'],
+                'stock' => $product['metadata']['stock'] ?? -1,
+                'stock_status' => $product['metadata']['stock_status'] ?? 'unknown',
+            ];
+        }, $fullProducts['data'] ?? []);
+
+        return [
+            'success' => true,
+            'data' => $partialData,
+            'count' => count($partialData),
+        ];
     }
 }
 
