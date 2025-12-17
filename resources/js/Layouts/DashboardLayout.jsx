@@ -34,6 +34,7 @@ export default function DashboardLayout({ children }) {
         { name: 'Dashboard', href: route('dashboard'), icon: 'dashboard', current: route().current('dashboard') },
         { name: 'Products', href: route('products.index'), icon: 'inventory_2', current: route().current('products.*') },
         { name: 'Transactions', href: route('transactions.index'), icon: 'receipt_long', current: route().current('transactions.*') },
+        { name: 'OTP Sessions', href: route('otp-sessions.index'), icon: 'verified_user', current: route().current('otp-sessions.*') },
         { name: 'Top Up', href: route('topup.index'), icon: 'account_balance_wallet', current: route().current('topup.*') },
     ];
 
@@ -119,8 +120,8 @@ export default function DashboardLayout({ children }) {
                         <Link
                             href={route('profile.edit')}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${route().current('profile.*')
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-[22px]">settings</span>

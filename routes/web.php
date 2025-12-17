@@ -1,14 +1,17 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OtpSessionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\TopUpController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Admin;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -36,6 +39,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+
+    // OTP Sessions
+    Route::get('/otp-sessions', [OtpSessionController::class, 'index'])->name('otp-sessions.index');
+    Route::post('/otp-sessions/request-otp', [OtpSessionController::class, 'requestOtp'])->name('otp-sessions.request-otp');
+    Route::post('/otp-sessions/verify-otp', [OtpSessionController::class, 'verifyOtp'])->name('otp-sessions.verify-otp');
+    Route::post('/otp-sessions/{session}/extend', [OtpSessionController::class, 'extend'])->name('otp-sessions.extend');
+    Route::post('/otp-sessions/sync', [OtpSessionController::class, 'sync'])->name('otp-sessions.sync');
+    Route::delete('/otp-sessions/{session}', [OtpSessionController::class, 'destroy'])->name('otp-sessions.destroy');
+
+    // Purchases
+    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::get('/purchases/{product}/requirements', [PurchaseController::class, 'requirements'])->name('purchases.requirements');
 });
 
 // SanPay Callback (no auth required)
@@ -54,22 +69,36 @@ Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
-        
+
         // Products
         Route::resource('products', Admin\ProductController::class);
-        
+
         // Categories
         Route::resource('categories', Admin\CategoryController::class);
-        
+
         // Users
         Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [Admin\UserController::class, 'show'])->name('users.show');
         Route::get('users/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
         Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
         Route::post('users/{user}/adjust-balance', [Admin\UserController::class, 'adjustBalance'])->name('users.adjust-balance');
-        
+
         // Transactions
         Route::get('transactions', [Admin\TransactionController::class, 'index'])->name('transactions.index');
+        Route::get('transactions/{transaction}', [Admin\TransactionController::class, 'show'])->name('transactions.show');
+        Route::post('transactions/{transaction}/update-status', [Admin\TransactionController::class, 'updateStatus'])->name('transactions.update-status');
+        Route::post('transactions/{transaction}/check-status', [Admin\TransactionController::class, 'checkStatus'])->name('transactions.check-status');
+
+        // Providers
+        Route::get('providers', [Admin\ProviderController::class, 'index'])->name('providers.index');
+        Route::get('providers/all-products', [Admin\ProviderController::class, 'allProducts'])->name('providers.all-products');
+        Route::get('providers/{provider}/products', [Admin\ProviderController::class, 'products'])->name('providers.products');
+        Route::get('providers/{provider}/balance', [Admin\ProviderController::class, 'balance'])->name('providers.balance');
+        Route::post('providers/{provider}/sync', [Admin\ProviderController::class, 'sync'])->name('providers.sync');
+
+        // API Logs
+        Route::get('api-logs', [Admin\ApiLogController::class, 'index'])->name('api-logs.index');
+        Route::get('api-logs/{log}', [Admin\ApiLogController::class, 'show'])->name('api-logs.show');
     });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

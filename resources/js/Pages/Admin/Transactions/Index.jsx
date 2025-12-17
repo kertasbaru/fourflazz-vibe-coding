@@ -1,10 +1,87 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import axios from 'axios';
 import AdminLayout from '@/Layouts/AdminLayout';
+
+function StatusUpdateModal({ isOpen, onClose, transaction, onSuccess }) {
+    const [status, setStatus] = useState(transaction?.status || 'pending');
+    const [notes, setNotes] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const response = await axios.post(route('admin.transactions.update-status', transaction.id), {
+                status,
+                notes,
+            });
+            if (response.data.success) {
+                onSuccess();
+                onClose();
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to update status');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-md m-4 p-6" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Update Transaction Status</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+                        >
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="success">Success</option>
+                            <option value="failed">Failed</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes (optional)</label>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+                            placeholder="Reason for status change..."
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onClose} className="flex-1 py-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
+                        >
+                            {loading ? 'Updating...' : 'Update Status'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 export default function AdminTransactionsIndex({ transactions, stats, filters }) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
+    const [selectedTx, setSelectedTx] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [checkingStatus, setCheckingStatus] = useState(null);
 
     const handleFilter = (key, value) => {
         router.get(route('admin.transactions.index'), {
@@ -16,6 +93,21 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
     const handleSearch = (e) => {
         e.preventDefault();
         handleFilter('search', search);
+    };
+
+    const handleCheckStatus = async (tx) => {
+        setCheckingStatus(tx.id);
+        try {
+            const response = await axios.post(route('admin.transactions.check-status', tx.id));
+            if (response.data.success) {
+                alert(`Status: ${response.data.data.current_status}\nSerial: ${response.data.data.serial_number || 'N/A'}`);
+                router.reload({ only: ['transactions'] });
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to check status');
+        } finally {
+            setCheckingStatus(null);
+        }
     };
 
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID').format(value);
@@ -35,11 +127,11 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 <div>
                     <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Transactions</h2>
-                    <p className="text-slate-500">View all platform transactions</p>
+                    <p className="text-slate-500">View and manage platform transactions</p>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                         <p className="text-sm text-slate-500">Total</p>
                         <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
@@ -49,6 +141,10 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                         <p className="text-2xl font-bold text-emerald-600">{stats.success}</p>
                     </div>
                     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <p className="text-sm text-slate-500">Processing</p>
+                        <p className="text-2xl font-bold text-blue-600">{stats.processing || 0}</p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                         <p className="text-sm text-slate-500">Pending</p>
                         <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
                     </div>
@@ -56,8 +152,8 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                         <p className="text-sm text-slate-500">Failed</p>
                         <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 md:col-span-1 col-span-2">
-                        <p className="text-sm text-slate-500">Total Revenue</p>
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <p className="text-sm text-slate-500">Revenue</p>
                         <p className="text-xl font-bold text-primary">Rp {formatCurrency(stats.totalRevenue)}</p>
                     </div>
                 </div>
@@ -79,8 +175,8 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                             Search
                         </button>
                     </form>
-                    <div className="flex items-center gap-2">
-                        {['', 'pending', 'processing', 'success', 'failed'].map((s) => (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {['', 'pending', 'processing', 'success', 'failed', 'refunded'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => {
@@ -88,8 +184,8 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                                     handleFilter('status', s);
                                 }}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium ${status === s
-                                        ? 'bg-primary text-white'
-                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                                     }`}
                             >
                                 {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All'}
@@ -111,9 +207,9 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Product</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Target</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Profit</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -124,9 +220,8 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <p className="text-sm font-medium text-slate-900 dark:text-white">{tx.user?.name}</p>
-                                                    <p className="text-xs text-slate-500">{tx.user?.email}</p>
                                                 </td>
-                                                <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                                <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[150px] truncate">
                                                     {tx.product?.name}
                                                 </td>
                                                 <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400">
@@ -135,9 +230,6 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                                                 <td className="py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white">
                                                     Rp {formatCurrency(tx.amount)}
                                                 </td>
-                                                <td className="py-4 px-4 text-sm font-semibold text-emerald-600">
-                                                    +Rp {formatCurrency(tx.profit)}
-                                                </td>
                                                 <td className="py-4 px-4">
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[tx.status]}`}>
                                                         {tx.status}
@@ -145,6 +237,29 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                                                 </td>
                                                 <td className="py-4 px-4 text-sm text-slate-500">
                                                     {new Date(tx.created_at).toLocaleDateString('id-ID')}
+                                                </td>
+                                                <td className="py-4 px-4">
+                                                    <div className="flex items-center gap-1">
+                                                        {tx.status === 'processing' && (
+                                                            <button
+                                                                onClick={() => handleCheckStatus(tx)}
+                                                                disabled={checkingStatus === tx.id}
+                                                                className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                                                                title="Check API Status"
+                                                            >
+                                                                <span className={`material-symbols-outlined text-lg ${checkingStatus === tx.id ? 'animate-spin' : ''}`}>
+                                                                    {checkingStatus === tx.id ? 'progress_activity' : 'refresh'}
+                                                                </span>
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => { setSelectedTx(tx); setModalOpen(true); }}
+                                                            className="p-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                                                            title="Update Status"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg">edit</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -174,6 +289,13 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
                     )}
                 </div>
             </div>
+
+            <StatusUpdateModal
+                isOpen={modalOpen}
+                onClose={() => { setModalOpen(false); setSelectedTx(null); }}
+                transaction={selectedTx}
+                onSuccess={() => router.reload({ only: ['transactions', 'stats'] })}
+            />
         </AdminLayout>
     );
 }

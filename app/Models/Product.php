@@ -20,6 +20,9 @@ class Product extends Model
         'selling_price',
         'provider',
         'product_code',
+        'api_source',
+        'external_code',
+        'api_metadata',
         'type',
         'stock',
         'is_active',
@@ -30,6 +33,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'is_active' => 'boolean',
+        'api_metadata' => 'array',
     ];
 
     /**

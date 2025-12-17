@@ -31,6 +31,8 @@ export default function AdminLayout({ children }) {
         { name: 'Categories', href: route('admin.categories.index'), icon: 'category', current: route().current('admin.categories.*') },
         { name: 'Users', href: route('admin.users.index'), icon: 'group', current: route().current('admin.users.*') },
         { name: 'Transactions', href: route('admin.transactions.index'), icon: 'receipt_long', current: route().current('admin.transactions.*') },
+        { name: 'API Providers', href: route('admin.providers.index'), icon: 'cloud_sync', current: route().current('admin.providers.*') },
+        { name: 'API Logs', href: route('admin.api-logs.index'), icon: 'history', current: route().current('admin.api-logs.*') },
     ];
 
     return (
@@ -63,8 +65,8 @@ export default function AdminLayout({ children }) {
                                 key={item.name}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${item.current
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                                     }`}
                             >
                                 <span className={`material-symbols-outlined text-[22px] ${item.current ? 'filled' : ''}`}>

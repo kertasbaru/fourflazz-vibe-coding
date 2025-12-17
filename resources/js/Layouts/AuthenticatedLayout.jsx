@@ -30,6 +30,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    href={route('otp-sessions.index')}
+                                    active={route().current('otp-sessions.*')}
+                                >
+                                    OTP Sessions
+                                </NavLink>
                             </div>
                         </div>
 
