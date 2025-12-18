@@ -33,6 +33,7 @@ export default function AdminLayout({ children }) {
         { name: 'Transactions', href: route('admin.transactions.index'), icon: 'receipt_long', current: route().current('admin.transactions.*') },
         { name: 'API Providers', href: route('admin.providers.index'), icon: 'cloud_sync', current: route().current('admin.providers.*') },
         { name: 'API Logs', href: route('admin.api-logs.index'), icon: 'history', current: route().current('admin.api-logs.*') },
+        { name: 'System Logs', href: route('admin.logs.index'), icon: 'terminal', current: route().current('admin.logs.*') },
         { name: 'Settings', href: route('admin.settings.index'), icon: 'settings', current: route().current('admin.settings.*') },
     ];
 

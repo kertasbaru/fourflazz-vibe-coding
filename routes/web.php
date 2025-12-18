@@ -120,6 +120,11 @@ Route::prefix('admin')
         // API Logs
         Route::get('api-logs', [Admin\ApiLogController::class, 'index'])->name('api-logs.index');
         Route::get('api-logs/{log}', [Admin\ApiLogController::class, 'show'])->name('api-logs.show');
+
+        // System Logs
+        Route::get('logs', [Admin\LogController::class, 'index'])->name('logs.index');
+        Route::post('logs/clear', [Admin\LogController::class, 'clear'])->name('logs.clear');
+        Route::get('logs/download', [Admin\LogController::class, 'download'])->name('logs.download');
     });
 
 require __DIR__ . '/auth.php';

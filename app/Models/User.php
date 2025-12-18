@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -49,6 +49,28 @@ class User extends Authenticatable
             'password' => 'hashed',
             'balance' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Auto-verify admin users
+        static::creating(function ($user) {
+            if ($user->role === 'admin') {
+                $user->email_verified_at = now();
+            }
+        });
+
+        // Also verify when role changes to admin
+        static::updating(function ($user) {
+            if ($user->isDirty('role') && $user->role === 'admin' && !$user->email_verified_at) {
+                $user->email_verified_at = now();
+            }
+        });
     }
 
     /**
