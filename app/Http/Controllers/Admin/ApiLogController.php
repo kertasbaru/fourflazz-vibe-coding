@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,6 +28,11 @@ class ApiLogController extends Controller
             $query->where('success', $request->status === 'success');
         }
 
+        // Filter by user
+        if ($request->filled('user')) {
+            $query->where('user_id', $request->user);
+        }
+
         // Filter by date range
         if ($request->filled('from')) {
             $query->whereDate('created_at', '>=', $request->from);
@@ -48,6 +54,7 @@ class ApiLogController extends Controller
                 'error_message' => $log->error_message,
                 'response_time' => $log->response_time ? round($log->response_time * 1000) . 'ms' : null,
                 'user' => $log->user ? $log->user->name : 'System',
+                'user_id' => $log->user_id,
                 'ip_address' => $log->ip_address,
                 'created_at' => $log->created_at->format('Y-m-d H:i:s'),
             ];
@@ -64,11 +71,15 @@ class ApiLogController extends Controller
         // Get providers for filter
         $providers = ApiLog::distinct('provider')->pluck('provider');
 
+        // Get users for filter
+        $users = User::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('Admin/ApiLogs/Index', [
             'logs' => $logs,
             'stats' => $stats,
             'providers' => $providers,
-            'filters' => $request->only(['provider', 'status', 'from', 'to']),
+            'users' => $users,
+            'filters' => $request->only(['provider', 'status', 'user', 'from', 'to']),
         ]);
     }
 

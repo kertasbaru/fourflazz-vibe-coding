@@ -21,40 +21,57 @@ class KajeWebhookController extends Controller
     {
         $startTime = microtime(true);
         $rawBody = $request->getContent();
-        $data = json_decode($rawBody, true);
 
-        // Log the incoming webhook
-        Log::info('KAJE Webhook Received', [
-            'payload' => $data,
+        // Log raw request for debugging
+        Log::info('KAJE Webhook Raw Request', [
+            'raw_body' => $rawBody,
+            'content_type' => $request->header('Content-Type'),
             'headers' => $request->headers->all(),
             'ip' => $request->ip(),
         ]);
 
+        // Try to parse JSON, fallback to request input if JSON fails
+        $data = json_decode($rawBody, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // Fallback to form data or query params
+            $data = $request->all();
+            Log::info('KAJE Webhook: Using form/query data instead of JSON', ['data' => $data]);
+        }
+
+        // If still empty, try to get from request body as form-urlencoded
+        if (empty($data)) {
+            parse_str($rawBody, $data);
+            Log::info('KAJE Webhook: Parsed as form-urlencoded', ['data' => $data]);
+        }
+
+        Log::info('KAJE Webhook Parsed Payload', ['payload' => $data]);
+
         // Validate payload structure
-        if (!$this->validatePayload($data)) {
-            $this->logWebhook($request, $data, null, false, 'Invalid payload structure', $startTime);
+        $validationResult = $this->validatePayload($data);
+        if (!$validationResult['valid']) {
+            $this->logWebhook($request, $data, null, false, $validationResult['error'], $startTime);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid payload structure'
+                'message' => $validationResult['error']
             ], 400);
         }
 
-        // Extract data from payload
-        $refId = $data['ref_id'] ?? null;
-        $trxId = $data['trx_id'] ?? null;
+        // Extract data from payload - support multiple field name formats
+        $refId = $data['ref_id'] ?? $data['refId'] ?? $data['reference_id'] ?? null;
+        $trxId = $data['trx_id'] ?? $data['trxId'] ?? $data['transaction_id'] ?? $data['id'] ?? null;
         $status = $data['status'] ?? null;
-        $destination = $data['destination'] ?? null;
-        $serialNumber = $data['serial_number'] ?? null;
-        $message = $data['message'] ?? null;
+        $destination = $data['destination'] ?? $data['msisdn'] ?? $data['phone'] ?? null;
+        $serialNumber = $data['serial_number'] ?? $data['serialNumber'] ?? $data['sn'] ?? null;
+        $message = $data['message'] ?? $data['info'] ?? $data['description'] ?? null;
         $deeplink = $data['deeplink'] ?? null;
-        $metaData = $data['meta_data'] ?? [];
+        $metaData = $data['meta_data'] ?? $data['metadata'] ?? [];
 
         // Find transaction by reference number
         $transaction = Transaction::where('reference_number', $refId)->first();
 
         if (!$transaction) {
-            $this->logWebhook($request, $data, null, false, 'Transaction not found', $startTime);
+            $this->logWebhook($request, $data, null, false, "Transaction not found for ref_id: {$refId}", $startTime);
 
             return response()->json([
                 'status' => 'error',
@@ -110,24 +127,33 @@ class KajeWebhookController extends Controller
      * Validate webhook payload structure.
      *
      * @param array|null $data
-     * @return bool
+     * @return array{valid: bool, error: ?string}
      */
-    protected function validatePayload(?array $data): bool
+    protected function validatePayload(?array $data): array
     {
-        if (!$data) {
-            return false;
+        if (!$data || empty($data)) {
+            return ['valid' => false, 'error' => 'Empty or null payload'];
         }
 
-        // Required fields
-        $requiredFields = ['status', 'ref_id', 'trx_id'];
-
-        foreach ($requiredFields as $field) {
-            if (!isset($data[$field]) || empty($data[$field])) {
-                return false;
-            }
+        // Check for ref_id (support multiple field names)
+        $refId = $data['ref_id'] ?? $data['refId'] ?? $data['reference_id'] ?? null;
+        if (empty($refId)) {
+            return ['valid' => false, 'error' => 'Missing ref_id field'];
         }
 
-        return true;
+        // Check for status
+        $status = $data['status'] ?? null;
+        if (empty($status)) {
+            return ['valid' => false, 'error' => 'Missing status field'];
+        }
+
+        // trx_id is optional for some providers
+        // $trxId = $data['trx_id'] ?? $data['trxId'] ?? $data['transaction_id'] ?? $data['id'] ?? null;
+        // if (empty($trxId)) {
+        //     return ['valid' => false, 'error' => 'Missing trx_id field'];
+        // }
+
+        return ['valid' => true, 'error' => null];
     }
 
     /**

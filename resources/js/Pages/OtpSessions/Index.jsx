@@ -1,9 +1,58 @@
 import { Head, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function SessionCard({ session, onExtend, onDelete, loading }) {
+function CountdownTimer({ expiresAt }) {
+    const [timeLeft, setTimeLeft] = useState('');
+    const [isExpired, setIsExpired] = useState(false);
+
+    useEffect(() => {
+        if (!expiresAt) return;
+
+        const calculateTimeLeft = () => {
+            const now = new Date();
+            const expiry = new Date(expiresAt);
+            const diff = expiry - now;
+
+            if (diff <= 0) {
+                setIsExpired(true);
+                setTimeLeft('Expired');
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            if (days > 0) {
+                setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+            } else if (hours > 0) {
+                setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+            } else if (minutes > 0) {
+                setTimeLeft(`${minutes}m ${seconds}s`);
+            } else {
+                setTimeLeft(`${seconds}s`);
+            }
+        };
+
+        calculateTimeLeft();
+        const interval = setInterval(calculateTimeLeft, 1000);
+        return () => clearInterval(interval);
+    }, [expiresAt]);
+
+    if (!expiresAt) return null;
+
+    return (
+        <div className={`flex items-center gap-1 text-xs ${isExpired ? 'text-red-500' : 'text-slate-500'}`}>
+            <span className="material-symbols-outlined text-sm">timer</span>
+            <span>{timeLeft}</span>
+        </div>
+    );
+}
+
+function SessionCard({ session, onExtend, onDelete, onResend, loading }) {
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center justify-between">
@@ -36,9 +85,22 @@ function SessionCard({ session, onExtend, onDelete, loading }) {
                                 {session.provider.toUpperCase()}
                             </span>
                         </div>
+                        {session.expires_at && session.is_active && (
+                            <CountdownTimer expiresAt={session.expires_at} />
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {session.is_expired && session.is_active && (
+                        <button
+                            onClick={() => onResend(session)}
+                            disabled={loading}
+                            className="p-2 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors disabled:opacity-50"
+                            title="Resend OTP"
+                        >
+                            <span className="material-symbols-outlined text-xl">send</span>
+                        </button>
+                    )}
                     {session.can_extend && (
                         <button
                             onClick={() => onExtend(session.id)}
@@ -63,6 +125,42 @@ function SessionCard({ session, onExtend, onDelete, loading }) {
     );
 }
 
+function ConfirmCloseModal({ isOpen, onConfirm, onCancel }) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-sm m-4 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="size-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                        <span className="material-symbols-outlined text-amber-600">warning</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                        Discard OTP Request?
+                    </h3>
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                    An OTP has been sent to your phone. If you close now, you'll need to request a new OTP.
+                </p>
+                <div className="flex gap-3">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    >
+                        Continue
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                        Discard
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function AddSessionModal({ isOpen, onClose, onSuccess }) {
     const [step, setStep] = useState('phone'); // phone, otp
     const [phone, setPhone] = useState('');
@@ -71,6 +169,16 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [canResendIn, setCanResendIn] = useState(0);
+    const [otpSent, setOtpSent] = useState(false);
+    const [showConfirmClose, setShowConfirmClose] = useState(false);
+
+    // Countdown timer for resend
+    useEffect(() => {
+        if (canResendIn > 0) {
+            const timer = setTimeout(() => setCanResendIn(canResendIn - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [canResendIn]);
 
     const formatPhone = (value) => {
         // Remove non-digits
@@ -104,6 +212,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                 setSessionId(data.data.session_id);
                 setCanResendIn(data.data.can_resend_in || 60);
                 setStep('otp');
+                setOtpSent(true);
             } else {
                 setError(data.message || 'Failed to request OTP');
             }
@@ -129,7 +238,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
 
             if (data.success) {
                 onSuccess();
-                handleClose();
+                handleClose(true);
             } else {
                 setError(data.message || 'Invalid OTP');
             }
@@ -141,106 +250,144 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
         }
     };
 
-    const handleClose = () => {
+    const handleCloseAttempt = () => {
+        if (otpSent && step === 'otp') {
+            setShowConfirmClose(true);
+        } else {
+            handleClose(false);
+        }
+    };
+
+    const handleClose = (force = false) => {
+        if (!force && otpSent && step === 'otp') {
+            setShowConfirmClose(true);
+            return;
+        }
         setStep('phone');
         setPhone('');
         setOtp('');
         setSessionId(null);
         setError('');
+        setOtpSent(false);
+        setShowConfirmClose(false);
+        setCanResendIn(0);
         onClose();
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleClose}>
-            <div
-                className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-md m-4 overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                        {step === 'phone' ? 'Add OTP Session' : 'Enter OTP Code'}
-                    </h3>
-                    <button onClick={handleClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
+        <>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseAttempt}>
+                <div
+                    className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-md m-4 overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                            {step === 'phone' ? 'Add OTP Session' : 'Enter OTP Code'}
+                        </h3>
+                        <button onClick={handleCloseAttempt} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
 
-                <div className="p-6">
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                            {error}
-                        </div>
-                    )}
+                    <div className="p-6">
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                                {error}
+                            </div>
+                        )}
 
-                    {step === 'phone' ? (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Phone Number (XL/AXIS/LIVEON)
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="08xxxxxxxxxx"
-                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
-                                <p className="mt-1 text-xs text-slate-500">
-                                    Enter your XL, AXIS, or LIVEON phone number
+                        {step === 'phone' ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Phone Number (XL/AXIS/LIVEON)
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="08xxxxxxxxxx"
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Enter your XL, AXIS, or LIVEON phone number
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={requestOtp}
+                                    disabled={loading || !phone}
+                                    className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {loading && <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>}
+                                    Request OTP
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    OTP code has been sent to <strong>{formatPhone(phone)}</strong>
                                 </p>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        OTP Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                                        placeholder="Enter 6-digit OTP"
+                                        maxLength={6}
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
+                                    />
+                                </div>
+                                <button
+                                    onClick={verifyOtp}
+                                    disabled={loading || otp.length !== 6}
+                                    className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {loading && <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>}
+                                    Verify OTP
+                                </button>
+                                <div className="flex items-center justify-between">
+                                    <button
+                                        onClick={() => setStep('phone')}
+                                        className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                    >
+                                        ← Change number
+                                    </button>
+                                    {canResendIn > 0 ? (
+                                        <span className="text-sm text-slate-500">
+                                            Resend in {canResendIn}s
+                                        </span>
+                                    ) : (
+                                        <button
+                                            onClick={requestOtp}
+                                            disabled={loading}
+                                            className="text-sm text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                                        >
+                                            Resend OTP
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                            <button
-                                onClick={requestOtp}
-                                disabled={loading || !phone}
-                                className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {loading && <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>}
-                                Request OTP
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                OTP code has been sent to <strong>{formatPhone(phone)}</strong>
-                            </p>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    OTP Code
-                                </label>
-                                <input
-                                    type="text"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                    placeholder="Enter 6-digit OTP"
-                                    maxLength={6}
-                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
-                                />
-                            </div>
-                            <button
-                                onClick={verifyOtp}
-                                disabled={loading || otp.length !== 6}
-                                className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {loading && <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>}
-                                Verify OTP
-                            </button>
-                            <button
-                                onClick={() => setStep('phone')}
-                                className="w-full py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                            >
-                                Back
-                            </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <ConfirmCloseModal
+                isOpen={showConfirmClose}
+                onConfirm={() => handleClose(true)}
+                onCancel={() => setShowConfirmClose(false)}
+            />
+        </>
     );
 }
 
-export default function OtpSessionsIndex({ sessions }) {
+export default function OtpSessionsIndex({ sessions, isAdmin }) {
     const [loading, setLoading] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
 
@@ -273,6 +420,28 @@ export default function OtpSessionsIndex({ sessions }) {
                 router.reload({ only: ['sessions'] });
             } else {
                 alert(data.message || 'Failed to delete session');
+            }
+        } catch (e) {
+            const message = e.response?.data?.message || 'Network error';
+            alert(message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resendOtp = async (session) => {
+        setLoading(true);
+        try {
+            const response = await axios.post('/otp-sessions/request-otp', {
+                phone: session.phone,
+                provider: session.provider,
+            });
+            const data = response.data;
+            if (data.success) {
+                router.reload({ only: ['sessions'] });
+                alert('OTP has been resent. Please check your phone.');
+            } else {
+                alert(data.message || 'Failed to resend OTP');
             }
         } catch (e) {
             const message = e.response?.data?.message || 'Network error';
@@ -315,14 +484,16 @@ export default function OtpSessionsIndex({ sessions }) {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            onClick={syncSessions}
-                            disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-lg">sync</span>
-                            Sync
-                        </button>
+                        {isAdmin && (
+                            <button
+                                onClick={syncSessions}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-lg">sync</span>
+                                Sync
+                            </button>
+                        )}
                         <button
                             onClick={() => setModalOpen(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
@@ -353,6 +524,7 @@ export default function OtpSessionsIndex({ sessions }) {
                                 session={session}
                                 onExtend={extendSession}
                                 onDelete={deleteSession}
+                                onResend={resendOtp}
                                 loading={loading}
                             />
                         ))

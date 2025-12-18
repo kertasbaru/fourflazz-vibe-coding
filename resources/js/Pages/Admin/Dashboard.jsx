@@ -143,10 +143,10 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
                                             </td>
                                             <td className="py-3 px-2">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${transaction.status === 'success' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                                                        transaction.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                    transaction.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                     }`}>
-                                                    {transaction.status}
+                                                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-2 text-sm text-slate-500">

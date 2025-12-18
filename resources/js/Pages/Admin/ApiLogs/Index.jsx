@@ -42,8 +42,8 @@ function LogRow({ log }) {
                 <td className="px-4 py-3 text-sm text-slate-500">{log.created_at}</td>
                 <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${log.provider === 'kmsp'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
                         }`}>
                         {log.provider.toUpperCase()}
                     </span>
@@ -51,8 +51,8 @@ function LogRow({ log }) {
                 <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                         <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${log.method === 'POST'
-                                ? 'bg-amber-100 text-amber-700'
-                                : 'bg-slate-100 text-slate-700'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-slate-100 text-slate-700'
                             }`}>
                             {log.method}
                         </span>
@@ -63,8 +63,8 @@ function LogRow({ log }) {
                 </td>
                 <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${log.success
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
                         {log.success ? 'Success' : 'Failed'}
                     </span>
@@ -109,20 +109,29 @@ function LogRow({ log }) {
     );
 }
 
-export default function ApiLogsIndex({ logs, stats, providers, filters }) {
+export default function ApiLogsIndex({ logs, stats, providers, users, filters }) {
     const [filterProvider, setFilterProvider] = useState(filters.provider || '');
     const [filterStatus, setFilterStatus] = useState(filters.status || '');
+    const [filterUser, setFilterUser] = useState(filters.user || '');
+    const [filterFrom, setFilterFrom] = useState(filters.from || '');
+    const [filterTo, setFilterTo] = useState(filters.to || '');
 
     const applyFilters = () => {
         router.get(route('admin.api-logs.index'), {
             provider: filterProvider || undefined,
             status: filterStatus || undefined,
+            user: filterUser || undefined,
+            from: filterFrom || undefined,
+            to: filterTo || undefined,
         }, { preserveState: true });
     };
 
     const clearFilters = () => {
         setFilterProvider('');
         setFilterStatus('');
+        setFilterUser('');
+        setFilterFrom('');
+        setFilterTo('');
         router.get(route('admin.api-logs.index'));
     };
 
@@ -149,13 +158,17 @@ export default function ApiLogsIndex({ logs, stats, providers, filters }) {
 
                 {/* Filters */}
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6">
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="material-symbols-outlined text-slate-500">filter_alt</span>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Filters</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Provider</label>
                             <select
                                 value={filterProvider}
                                 onChange={(e) => setFilterProvider(e.target.value)}
-                                className="h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm"
+                                className="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white"
                             >
                                 <option value="">All Providers</option>
                                 {providers.map(p => (
@@ -168,27 +181,60 @@ export default function ApiLogsIndex({ logs, stats, providers, filters }) {
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm"
+                                className="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white"
                             >
                                 <option value="">All Status</option>
                                 <option value="success">Success</option>
                                 <option value="failed">Failed</option>
                             </select>
                         </div>
-                        <div className="flex items-end gap-2">
-                            <button
-                                onClick={applyFilters}
-                                className="h-9 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90"
+                        <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">User</label>
+                            <select
+                                value={filterUser}
+                                onChange={(e) => setFilterUser(e.target.value)}
+                                className="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white"
                             >
-                                Apply
-                            </button>
-                            <button
-                                onClick={clearFilters}
-                                className="h-9 px-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-200"
-                            >
-                                Clear
-                            </button>
+                                <option value="">All Users</option>
+                                {users && users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                            </select>
                         </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">From Date</label>
+                            <input
+                                type="date"
+                                value={filterFrom}
+                                onChange={(e) => setFilterFrom(e.target.value)}
+                                className="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">To Date</label>
+                            <input
+                                type="date"
+                                value={filterTo}
+                                onChange={(e) => setFilterTo(e.target.value)}
+                                className="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-white"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <button
+                            onClick={applyFilters}
+                            className="h-9 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">search</span>
+                            Apply Filters
+                        </button>
+                        <button
+                            onClick={clearFilters}
+                            className="h-9 px-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">clear</span>
+                            Clear
+                        </button>
                     </div>
                 </div>
 
@@ -235,10 +281,10 @@ export default function ApiLogsIndex({ logs, stats, providers, filters }) {
                                         key={i}
                                         href={link.url || '#'}
                                         className={`px-3 py-1 rounded text-sm ${link.active
-                                                ? 'bg-primary text-white'
-                                                : link.url
-                                                    ? 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                    : 'text-slate-400 cursor-not-allowed'
+                                            ? 'bg-primary text-white'
+                                            : link.url
+                                                ? 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                : 'text-slate-400 cursor-not-allowed'
                                             }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
