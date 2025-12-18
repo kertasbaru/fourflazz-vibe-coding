@@ -63,6 +63,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // SanPay Callback (no auth required)
 Route::post('/topup/callback', [TopUpController::class, 'callback'])->name('topup.callback');
 
+// KAJE Webhook for transaction updates (no auth required)
+Route::post('/webhook/kaje/transaction', [App\Http\Controllers\KajeWebhookController::class, 'handleCallback'])->name('webhook.kaje.transaction');
+
 // Profile Routes
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -79,6 +82,10 @@ Route::prefix('admin')
 
         // Products
         Route::resource('products', Admin\ProductController::class);
+        Route::post('products/bulk-inactive', [Admin\ProductController::class, 'bulkInactive'])->name('products.bulk-inactive');
+        Route::post('products/bulk-delete', [Admin\ProductController::class, 'bulkDelete'])->name('products.bulk-delete');
+        Route::post('products/bulk-margin', [Admin\ProductController::class, 'bulkUpdateMargin'])->name('products.bulk-margin');
+        Route::post('products/bulk-category', [Admin\ProductController::class, 'bulkUpdateCategory'])->name('products.bulk-category');
 
         // Categories
         Route::resource('categories', Admin\CategoryController::class);
