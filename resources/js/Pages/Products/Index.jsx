@@ -3,6 +3,8 @@ import { useState } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 function ProductCard({ product }) {
+    const firstBrand = product.brands?.[0] || '';
+
     return (
         <Link
             href={route('products.show', product.id)}
@@ -18,7 +20,9 @@ function ProductCard({ product }) {
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
                         {product.name}
                     </h4>
-                    <p className="text-xs text-slate-500 mt-0.5">{product.provider}</p>
+                    {firstBrand && (
+                        <p className="text-xs text-slate-500 mt-0.5">{firstBrand}</p>
+                    )}
                     <div className="flex items-center justify-between mt-3">
                         <p className="text-lg font-bold text-primary">
                             Rp {new Intl.NumberFormat('id-ID').format(product.selling_price)}
@@ -33,10 +37,10 @@ function ProductCard({ product }) {
     );
 }
 
-export default function ProductsIndex({ products, categories, providers, filters }) {
+export default function ProductsIndex({ products, categories, brands, filters }) {
     const [search, setSearch] = useState(filters.search || '');
     const [selectedCategory, setSelectedCategory] = useState(filters.category || '');
-    const [selectedProvider, setSelectedProvider] = useState(filters.provider || '');
+    const [selectedBrand, setSelectedBrand] = useState(filters.brand || '');
 
     const handleFilter = (key, value) => {
         router.get(route('products.index'), {
@@ -118,35 +122,35 @@ export default function ProductsIndex({ products, categories, providers, filters
                     ))}
                 </div>
 
-                {/* Provider Filter */}
-                {providers && providers.length > 0 && (
+                {/* Brand Filter */}
+                {brands && brands.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-slate-500 font-medium">Provider:</span>
+                        <span className="text-sm text-slate-500 font-medium">Brand:</span>
                         <button
                             onClick={() => {
-                                setSelectedProvider('');
-                                handleFilter('provider', '');
+                                setSelectedBrand('');
+                                handleFilter('brand', '');
                             }}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${!selectedProvider
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${!selectedBrand
                                 ? 'bg-primary text-white'
                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                                 }`}
                         >
                             All
                         </button>
-                        {providers.map((provider) => (
+                        {brands.map((brand) => (
                             <button
-                                key={provider}
+                                key={brand}
                                 onClick={() => {
-                                    setSelectedProvider(provider);
-                                    handleFilter('provider', provider);
+                                    setSelectedBrand(brand);
+                                    handleFilter('brand', brand);
                                 }}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${selectedProvider === provider
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${selectedBrand === brand
                                     ? 'bg-primary text-white'
                                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                                     }`}
                             >
-                                {provider}
+                                {brand}
                             </button>
                         ))}
                     </div>
@@ -163,20 +167,75 @@ export default function ProductsIndex({ products, categories, providers, filters
 
                         {/* Pagination */}
                         {products.last_page > 1 && (
-                            <div className="flex items-center justify-center gap-2 mt-6">
-                                {products.links.map((link, index) => (
-                                    <Link
-                                        key={index}
-                                        href={link.url || '#'}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${link.active
-                                            ? 'bg-primary text-white'
-                                            : link.url
-                                                ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                                            }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
+                            <div className="flex items-center justify-center gap-1 sm:gap-2 mt-6 flex-wrap">
+                                {/* Previous Button */}
+                                <Link
+                                    href={products.prev_page_url || '#'}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${products.prev_page_url
+                                            ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed pointer-events-none'
+                                        }`}
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                                    <span className="hidden sm:inline">Prev</span>
+                                </Link>
+
+                                {/* Page Numbers - Hidden on mobile, shown on sm+ */}
+                                <div className="hidden sm:flex items-center gap-1">
+                                    {products.links.slice(1, -1).map((link, index) => {
+                                        const pageNum = index + 1;
+                                        const totalPages = products.last_page;
+                                        const currentPage = products.current_page;
+
+                                        // Show first, last, current, and adjacent pages
+                                        const showPage = pageNum === 1 ||
+                                            pageNum === totalPages ||
+                                            Math.abs(pageNum - currentPage) <= 1;
+
+                                        // Show ellipsis
+                                        const showEllipsisBefore = pageNum === currentPage - 2 && currentPage > 4;
+                                        const showEllipsisAfter = pageNum === currentPage + 2 && currentPage < totalPages - 3;
+
+                                        if (showEllipsisBefore || showEllipsisAfter) {
+                                            return <span key={index} className="px-2 text-slate-400">...</span>;
+                                        }
+
+                                        if (!showPage && pageNum !== 2 && pageNum !== totalPages - 1) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <Link
+                                                key={index}
+                                                href={link.url || '#'}
+                                                className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors text-center ${link.active
+                                                        ? 'bg-primary text-white'
+                                                        : link.url
+                                                            ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                                    }`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Page indicator for mobile */}
+                                <span className="sm:hidden px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
+                                    {products.current_page} / {products.last_page}
+                                </span>
+
+                                {/* Next Button */}
+                                <Link
+                                    href={products.next_page_url || '#'}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${products.next_page_url
+                                            ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed pointer-events-none'
+                                        }`}
+                                >
+                                    <span className="hidden sm:inline">Next</span>
+                                    <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                                </Link>
                             </div>
                         )}
                     </>

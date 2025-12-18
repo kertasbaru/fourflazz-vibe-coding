@@ -18,7 +18,6 @@ class Product extends Model
         'description',
         'price',
         'selling_price',
-        'provider',
         'product_code',
         'api_source',
         'external_code',

@@ -10,12 +10,14 @@ export default function AdminProductForm({ categories, product }) {
         description: product?.description || '',
         price: product?.price || '',
         selling_price: product?.selling_price || '',
-        provider: product?.provider || '',
+        api_source: product?.api_source || '',
         product_code: product?.product_code || '',
         type: product?.type || 'prepaid',
         stock: product?.stock ?? -1,
         is_active: product?.is_active ?? true,
         sort_order: product?.sort_order || 0,
+        brands: product?.brands?.join(', ') || '',
+        prefixes: product?.prefixes?.join(', ') || '',
     });
 
     const handleSubmit = (e) => {
@@ -80,18 +82,69 @@ export default function AdminProductForm({ categories, product }) {
                             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                         </div>
 
-                        {/* Provider */}
+                        {/* API Source (Provider) */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Provider
+                                API Source
+                            </label>
+                            <select
+                                value={data.api_source}
+                                onChange={(e) => setData('api_source', e.target.value)}
+                                className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                            >
+                                <option value="">Manual (No API)</option>
+                                <option value="kmsp">KMSP</option>
+                                <option value="kaje">KAJE</option>
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">Select the API provider for this product</p>
+                        </div>
+
+                        {/* Brands */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Brands
                             </label>
                             <input
                                 type="text"
-                                value={data.provider}
-                                onChange={(e) => setData('provider', e.target.value)}
-                                placeholder="e.g., Telkomsel, XL, PLN"
+                                value={data.brands}
+                                onChange={(e) => setData('brands', e.target.value)}
+                                placeholder="e.g., Telkomsel, Indosat, XL"
                                 className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
                             />
+                            <p className="text-xs text-slate-500 mt-1">Comma-separated list of supported brands</p>
+                            {data.brands && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {data.brands.split(',').map((brand, i) => brand.trim() && (
+                                        <span key={i} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded">
+                                            {brand.trim()}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Prefixes */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Phone Prefixes
+                            </label>
+                            <input
+                                type="text"
+                                value={data.prefixes}
+                                onChange={(e) => setData('prefixes', e.target.value)}
+                                placeholder="e.g., 0811, 0812, 0813"
+                                className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Comma-separated phone prefixes for automatic matching</p>
+                            {data.prefixes && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {data.prefixes.split(',').map((prefix, i) => prefix.trim() && (
+                                        <span key={i} className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs rounded font-mono">
+                                            {prefix.trim()}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Price & Selling Price */}

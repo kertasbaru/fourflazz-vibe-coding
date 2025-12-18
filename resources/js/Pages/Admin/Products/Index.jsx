@@ -1,5 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useState, useRef } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 
 // Confirmation Modal Component
@@ -203,6 +203,122 @@ function CategoryModal({ isOpen, onClose, onConfirm, categories, selectedCount }
     );
 }
 
+// Import Modal
+function ImportModal({ isOpen, onClose }) {
+    const fileInput = useRef(null);
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+
+    const handleSubmit = async (file) => {
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(route('admin.products.import'), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken || '',
+                },
+                body: formData,
+            });
+
+            if (response.ok) {
+                router.reload();
+                onClose();
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Import failed');
+            }
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Import failed. Please check the file format.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (file) handleSubmit(file);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleSubmit(file);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+
+                <div className="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div className="px-6 pt-5 pb-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                Import Products
+                            </h3>
+                            <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+
+                        <div
+                            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragOver
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-slate-300 dark:border-slate-600'
+                                }`}
+                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleDrop}
+                        >
+                            <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">upload_file</span>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                                Drag and drop a CSV file here, or click to browse
+                            </p>
+                            <input
+                                ref={fileInput}
+                                type="file"
+                                accept=".csv,.txt"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                            />
+                            <button
+                                onClick={() => fileInput.current?.click()}
+                                disabled={uploading}
+                                className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                {uploading ? 'Uploading...' : 'Choose File'}
+                            </button>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-sm text-blue-700 dark:text-blue-400">
+                                <strong>Tip:</strong> Use <code>product_code</code> to update existing products.
+                                <br />
+                                <a
+                                    href={route('admin.products.template')}
+                                    className="underline hover:no-underline"
+                                >
+                                    Download template CSV
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function AdminProductsIndex({ products, categories, filters }) {
     const [search, setSearch] = useState(filters.search || '');
     const [filterCategory, setFilterCategory] = useState(filters.category || '');
@@ -218,6 +334,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [marginModalOpen, setMarginModalOpen] = useState(false);
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+    const [importModalOpen, setImportModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleSearch = (e) => {
@@ -395,13 +512,29 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Products</h2>
                         <p className="text-slate-500">Manage your digital products</p>
                     </div>
-                    <Link
-                        href={route('admin.products.create')}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">add</span>
-                        Add Product
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <a
+                            href={route('admin.products.export', { category: filters.category, status: filters.status, api_source: filters.api_source })}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">download</span>
+                            Export
+                        </a>
+                        <button
+                            onClick={() => setImportModalOpen(true)}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">upload</span>
+                            Import
+                        </button>
+                        <Link
+                            href={route('admin.products.create')}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">add</span>
+                            Add Product
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Bulk Actions Bar */}
@@ -696,6 +829,11 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                 onConfirm={handleBulkCategory}
                 categories={categories}
                 selectedCount={selectedProducts.length}
+            />
+
+            <ImportModal
+                isOpen={importModalOpen}
+                onClose={() => setImportModalOpen(false)}
             />
         </AdminLayout>
     );

@@ -26,31 +26,34 @@ class ProductController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('provider', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Filter by provider
-        if ($request->filled('provider')) {
-            $query->where('provider', $request->provider);
+        // Filter by brand
+        if ($request->filled('brand')) {
+            $query->whereJsonContains('brands', $request->brand);
         }
 
         $products = $query->paginate(12)->withQueryString();
 
         $categories = ProductCategory::active()->ordered()->get();
 
-        // Get unique providers for filter
-        $providers = Product::active()
-            ->whereNotNull('provider')
-            ->distinct()
-            ->pluck('provider');
+        // Get unique brands for filter
+        $allBrands = Product::active()
+            ->whereNotNull('brands')
+            ->pluck('brands')
+            ->flatten()
+            ->unique()
+            ->filter()
+            ->sort()
+            ->values();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
-            'providers' => $providers,
-            'filters' => $request->only(['category', 'search', 'provider']),
+            'brands' => $allBrands,
+            'filters' => $request->only(['category', 'search', 'brand']),
         ]);
     }
 

@@ -19,8 +19,7 @@ class ProductController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('product_code', 'like', '%' . $request->search . '%')
-                    ->orWhere('provider', 'like', '%' . $request->search . '%');
+                    ->orWhere('product_code', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -80,16 +79,22 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'provider' => 'nullable|string|max:100',
+            'api_source' => 'nullable|string|max:100',
             'product_code' => 'nullable|string|max:100',
             'type' => 'required|in:prepaid,postpaid',
             'stock' => 'required|integer|min:-1',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'brands' => 'nullable|string',
+            'prefixes' => 'nullable|string',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(6);
         $validated['is_active'] = $request->boolean('is_active', true);
+
+        // Parse brands and prefixes from comma-separated strings
+        $validated['brands'] = $this->parseCommaSeparated($request->brands);
+        $validated['prefixes'] = $this->parseCommaSeparated($request->prefixes);
 
         Product::create($validated);
 
@@ -115,20 +120,38 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'provider' => 'nullable|string|max:100',
+            'api_source' => 'nullable|string|max:100',
             'product_code' => 'nullable|string|max:100',
             'type' => 'required|in:prepaid,postpaid',
             'stock' => 'required|integer|min:-1',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'brands' => 'nullable|string',
+            'prefixes' => 'nullable|string',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+
+        // Parse brands and prefixes from comma-separated strings
+        $validated['brands'] = $this->parseCommaSeparated($request->brands);
+        $validated['prefixes'] = $this->parseCommaSeparated($request->prefixes);
 
         $product->update($validated);
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product updated successfully.');
+    }
+
+    /**
+     * Parse comma-separated string to array.
+     */
+    private function parseCommaSeparated(?string $value): array
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', $value))));
     }
 
     public function destroy(Product $product)
@@ -254,5 +277,240 @@ class ProductController extends Controller
             'count' => $count,
             'category_name' => $category->name,
         ]);
+    }
+
+    /**
+     * Export products to CSV.
+     */
+    public function export(Request $request)
+    {
+        $query = Product::with('category');
+
+        // Apply same filters as index
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+        if ($request->filled('api_source')) {
+            if ($request->api_source === 'manual') {
+                $query->whereNull('api_source');
+            } else {
+                $query->where('api_source', $request->api_source);
+            }
+        }
+
+        $products = $query->ordered()->get();
+
+        $filename = 'products-' . date('Y-m-d-His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($products) {
+            $file = fopen('php://output', 'w');
+
+            // CSV header
+            fputcsv($file, [
+                'id',
+                'product_code',
+                'name',
+                'description',
+                'category_name',
+                'category_id',
+                'price',
+                'selling_price',
+                'api_source',
+                'brands',
+                'type',
+                'stock',
+                'is_active',
+                'sort_order',
+            ]);
+
+            // CSV data
+            foreach ($products as $product) {
+                fputcsv($file, [
+                    $product->id,
+                    $product->product_code,
+                    $product->name,
+                    $product->description,
+                    $product->category?->name,
+                    $product->category_id,
+                    $product->price,
+                    $product->selling_price,
+                    $product->api_source,
+                    is_array($product->brands) ? implode(', ', $product->brands) : '',
+                    $product->type,
+                    $product->stock,
+                    $product->is_active ? 'yes' : 'no',
+                    $product->sort_order,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Import products from CSV.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:5120', // 5MB max
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->getRealPath();
+
+        $handle = fopen($path, 'r');
+        $header = fgetcsv($handle); // Skip header row
+
+        // Normalize header
+        $header = array_map(function ($col) {
+            return strtolower(trim($col));
+        }, $header);
+
+        $created = 0;
+        $updated = 0;
+        $errors = [];
+        $row = 1;
+
+        while (($data = fgetcsv($handle)) !== false) {
+            $row++;
+
+            // Skip empty rows
+            if (count(array_filter($data)) === 0) {
+                continue;
+            }
+
+            try {
+                // Map CSV columns to product fields
+                $rowData = array_combine($header, $data);
+
+                // Find existing product by product_code or ID
+                $product = null;
+                if (!empty($rowData['product_code'])) {
+                    $product = Product::where('product_code', $rowData['product_code'])->first();
+                }
+                if (!$product && !empty($rowData['id']) && is_numeric($rowData['id'])) {
+                    $product = Product::find($rowData['id']);
+                }
+
+                // Resolve category
+                $categoryId = null;
+                if (!empty($rowData['category_id']) && is_numeric($rowData['category_id'])) {
+                    $categoryId = $rowData['category_id'];
+                } elseif (!empty($rowData['category_name'])) {
+                    $category = ProductCategory::where('name', $rowData['category_name'])->first();
+                    $categoryId = $category?->id;
+                }
+
+                if (!$categoryId) {
+                    // Use first category as default
+                    $categoryId = ProductCategory::first()?->id;
+                }
+
+                $productData = [
+                    'name' => $rowData['name'] ?? $product?->name ?? 'Unnamed Product',
+                    'description' => $rowData['description'] ?? $product?->description ?? null,
+                    'category_id' => $categoryId,
+                    'price' => floatval($rowData['price'] ?? $product?->price ?? 0),
+                    'selling_price' => floatval($rowData['selling_price'] ?? $rowData['price'] ?? $product?->selling_price ?? 0),
+                    'api_source' => $rowData['api_source'] ?? $product?->api_source ?? null,
+                    'brands' => isset($rowData['brands']) ? array_values(array_filter(array_map('trim', explode(',', $rowData['brands'])))) : ($product?->brands ?? []),
+                    'product_code' => $rowData['product_code'] ?? $product?->product_code ?? null,
+                    'type' => $rowData['type'] ?? $product?->type ?? 'prepaid',
+                    'stock' => intval($rowData['stock'] ?? $product?->stock ?? -1),
+                    'is_active' => isset($rowData['is_active'])
+                        ? (strtolower($rowData['is_active']) === 'yes' || $rowData['is_active'] === '1' || $rowData['is_active'] === 'true')
+                        : ($product?->is_active ?? true),
+                    'sort_order' => intval($rowData['sort_order'] ?? $product?->sort_order ?? 0),
+                ];
+
+                if ($product) {
+                    // Update existing product
+                    $product->update($productData);
+                    $updated++;
+                } else {
+                    // Create new product
+                    $productData['slug'] = Str::slug($productData['name']) . '-' . Str::random(6);
+                    Product::create($productData);
+                    $created++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Row {$row}: " . $e->getMessage();
+            }
+        }
+
+        fclose($handle);
+
+        $message = "Import completed: {$created} created, {$updated} updated.";
+        if (count($errors) > 0) {
+            $message .= " " . count($errors) . " error(s) occurred.";
+        }
+
+        return back()->with('success', $message)->with('import_errors', $errors);
+    }
+
+    /**
+     * Download import template.
+     */
+    public function downloadTemplate()
+    {
+        $filename = 'products-import-template.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+
+            // CSV header
+            fputcsv($file, [
+                'id',
+                'product_code',
+                'name',
+                'description',
+                'category_name',
+                'category_id',
+                'price',
+                'selling_price',
+                'api_source',
+                'brands',
+                'type',
+                'stock',
+                'is_active',
+                'sort_order',
+            ]);
+
+            // Example row
+            fputcsv($file, [
+                '', // id (leave empty for new)
+                'PRODUCT-001',
+                'Example Product',
+                'Product description',
+                '', // category_name (optional)
+                '1', // category_id
+                '10000',
+                '12000',
+                'kmsp', // api_source: kmsp, kaje, or empty
+                'Telkomsel, Indosat', // brands (comma-separated)
+                'prepaid',
+                '-1', // -1 for unlimited
+                'yes',
+                '0',
+            ]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

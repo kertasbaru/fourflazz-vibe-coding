@@ -86,6 +86,9 @@ Route::prefix('admin')
         Route::post('products/bulk-delete', [Admin\ProductController::class, 'bulkDelete'])->name('products.bulk-delete');
         Route::post('products/bulk-margin', [Admin\ProductController::class, 'bulkUpdateMargin'])->name('products.bulk-margin');
         Route::post('products/bulk-category', [Admin\ProductController::class, 'bulkUpdateCategory'])->name('products.bulk-category');
+        Route::get('products-export', [Admin\ProductController::class, 'export'])->name('products.export');
+        Route::post('products-import', [Admin\ProductController::class, 'import'])->name('products.import');
+        Route::get('products-template', [Admin\ProductController::class, 'downloadTemplate'])->name('products.template');
 
         // Categories
         Route::resource('categories', Admin\CategoryController::class);

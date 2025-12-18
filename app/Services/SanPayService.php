@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApiLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -31,6 +32,11 @@ class SanPayService
      */
     protected function makeRequest(string $endpoint, array $data): array
     {
+        $startTime = microtime(true);
+
+        // Create sanitized data for logging (hide sensitive info)
+        $loggedData = $data;
+
         try {
             $payload = json_encode($data);
             $signature = $this->generateSignature($payload);
@@ -40,11 +46,26 @@ class SanPayService
                 'X-Merchant-Code' => $this->merchantCode,
                 'X-Signature' => $signature,
             ])->withBody($payload, 'application/json')
-              ->post("{$this->baseUrl}/{$endpoint}");
+                ->post("{$this->baseUrl}/{$endpoint}");
 
+            $responseTime = microtime(true) - $startTime;
             $result = $response->json();
+            $success = $response->successful() && isset($result['status']) && $result['status'] === 'success';
 
-            if ($response->successful() && isset($result['status']) && $result['status'] === 'success') {
+            // Log the API call
+            ApiLog::logApiCall(
+                'sanpay',
+                $endpoint,
+                'POST',
+                $loggedData,
+                $result,
+                $response->status(),
+                $success,
+                $success ? null : ($result['message'] ?? 'API request failed'),
+                $responseTime
+            );
+
+            if ($success) {
                 return [
                     'success' => true,
                     'data' => $result,
@@ -63,6 +84,21 @@ class SanPayService
                 'data' => $result,
             ];
         } catch (\Exception $e) {
+            $responseTime = microtime(true) - $startTime;
+
+            // Log the failed API call
+            ApiLog::logApiCall(
+                'sanpay',
+                $endpoint,
+                'POST',
+                $loggedData,
+                null,
+                null,
+                false,
+                $e->getMessage(),
+                $responseTime
+            );
+
             Log::error('SanPay API exception', [
                 'endpoint' => $endpoint,
                 'error' => $e->getMessage(),
@@ -169,15 +205,33 @@ class SanPayService
      */
     public function getChannels(): array
     {
+        $startTime = microtime(true);
+        $requestData = ['merchant_code' => $this->merchantCode];
+
         try {
             $response = Http::get("{$this->baseUrl}/get_channels", [
                 'apikey' => $this->apiKey,
                 'merchant_code' => $this->merchantCode,
             ]);
 
+            $responseTime = microtime(true) - $startTime;
             $result = $response->json();
+            $success = $response->successful() && isset($result['status']) && $result['status'] === 'success';
 
-            if ($response->successful() && isset($result['status']) && $result['status'] === 'success') {
+            // Log the API call
+            ApiLog::logApiCall(
+                'sanpay',
+                'get_channels',
+                'GET',
+                $requestData,
+                $result,
+                $response->status(),
+                $success,
+                $success ? null : ($result['message'] ?? 'Failed to get channels'),
+                $responseTime
+            );
+
+            if ($success) {
                 return [
                     'success' => true,
                     'va_channels' => $result['data']['va_channels'] ?? [],
@@ -190,6 +244,20 @@ class SanPayService
                 'message' => $result['message'] ?? 'Failed to get channels',
             ];
         } catch (\Exception $e) {
+            $responseTime = microtime(true) - $startTime;
+
+            ApiLog::logApiCall(
+                'sanpay',
+                'get_channels',
+                'GET',
+                $requestData,
+                null,
+                null,
+                false,
+                $e->getMessage(),
+                $responseTime
+            );
+
             Log::error('SanPay get channels error', ['error' => $e->getMessage()]);
             return [
                 'success' => false,
@@ -203,15 +271,33 @@ class SanPayService
      */
     public function getMutasi(): array
     {
+        $startTime = microtime(true);
+        $requestData = ['merchant_code' => $this->merchantCode];
+
         try {
             $response = Http::get("{$this->baseUrl}/get_mutasi", [
                 'apikey' => $this->apiKey,
                 'merchant_code' => $this->merchantCode,
             ]);
 
+            $responseTime = microtime(true) - $startTime;
             $result = $response->json();
+            $success = $response->successful() && isset($result['status']) && $result['status'] === 'success';
 
-            if ($response->successful() && isset($result['status']) && $result['status'] === 'success') {
+            // Log the API call
+            ApiLog::logApiCall(
+                'sanpay',
+                'get_mutasi',
+                'GET',
+                $requestData,
+                $result,
+                $response->status(),
+                $success,
+                $success ? null : ($result['message'] ?? 'Failed to get transaction history'),
+                $responseTime
+            );
+
+            if ($success) {
                 return [
                     'success' => true,
                     'data' => $result['data'] ?? [],
@@ -223,6 +309,20 @@ class SanPayService
                 'message' => $result['message'] ?? 'Failed to get transaction history',
             ];
         } catch (\Exception $e) {
+            $responseTime = microtime(true) - $startTime;
+
+            ApiLog::logApiCall(
+                'sanpay',
+                'get_mutasi',
+                'GET',
+                $requestData,
+                null,
+                null,
+                false,
+                $e->getMessage(),
+                $responseTime
+            );
+
             Log::error('SanPay get mutasi error', ['error' => $e->getMessage()]);
             return [
                 'success' => false,
