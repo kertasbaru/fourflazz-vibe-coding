@@ -7,8 +7,8 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inertial z-50 overflow-y-auto" aria-labelledby="modal - title" role="dialog" aria-modal="true">
-            < div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0" >
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
                 <div className="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
@@ -40,8 +40,8 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
                         </button>
                     </div>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }
 
@@ -273,8 +273,8 @@ function ImportModal({ isOpen, onClose }) {
 
                         <div
                             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragOver
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-slate-300 dark:border-slate-600'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-slate-300 dark:border-slate-600'
                                 }`}
                             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                             onDragLeave={() => setDragOver(false)}
@@ -323,7 +323,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
     const [search, setSearch] = useState(filters.search || '');
     const [filterCategory, setFilterCategory] = useState(filters.category || '');
     const [filterStatus, setFilterStatus] = useState(filters.status || '');
-    const [filterApiSource, setFilterApiSource] = useState(filters.api_source || '');
+    const [filterSource, setFilterSource] = useState(filters.source || '');
     const [filterNeedOtp, setFilterNeedOtp] = useState(filters.need_otp || '');
 
     // Bulk selection
@@ -347,7 +347,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
             search,
             category: filterCategory,
             status: filterStatus,
-            api_source: filterApiSource,
+            source: filterSource,
             need_otp: filterNeedOtp,
         }, { preserveState: true });
     };
@@ -356,7 +356,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
         setSearch('');
         setFilterCategory('');
         setFilterStatus('');
-        setFilterApiSource('');
+        setFilterSource('');
         setFilterNeedOtp('');
         router.get(route('admin.products.index'));
     };
@@ -402,6 +402,34 @@ export default function AdminProductsIndex({ products, categories, filters }) {
             }
         } catch (error) {
             console.error('Bulk inactive error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBulkActive = async () => {
+        if (selectedProducts.length === 0) return;
+
+        setLoading(true);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(route('admin.products.bulk-active'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                },
+                body: JSON.stringify({ product_ids: selectedProducts }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                router.reload({ only: ['products'] });
+                setSelectedProducts([]);
+                setSelectAll(false);
+            }
+        } catch (error) {
+            console.error('Bulk active error:', error);
         } finally {
             setLoading(false);
         }
@@ -479,7 +507,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                 },
                 body: JSON.stringify({
                     product_ids: selectedProducts,
-                    category_id: categoryId,
+                    category_id: parseInt(categoryId), // Convert to integer
                 }),
             });
 
@@ -499,7 +527,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
 
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID').format(value);
 
-    const activeFilterCount = [filterCategory, filterStatus, filterApiSource, filterNeedOtp].filter(f => f).length;
+    const activeFilterCount = [filterCategory, filterStatus, filterSource, filterNeedOtp].filter(f => f).length;
 
     return (
         <AdminLayout>
@@ -514,7 +542,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <a
-                            href={route('admin.products.export', { category: filters.category, status: filters.status, api_source: filters.api_source })}
+                            href={route('admin.products.export', { category: filters.category, status: filters.status, source: filters.source })}
                             className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
                         >
                             <span className="material-symbols-outlined text-[18px]">download</span>
@@ -547,35 +575,43 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
+                                onClick={handleBulkActive}
+                                disabled={loading}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                Active
+                            </button>
+                            <button
                                 onClick={handleBulkInactive}
                                 disabled={loading}
-                                className="px-3 py-1.5 text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg disabled:opacity-50"
                             >
-                                <span className="material-symbols-outlined text-[16px] mr-1">visibility_off</span>
+                                <span className="material-symbols-outlined text-[16px]">visibility_off</span>
                                 Inactive
                             </button>
                             <button
                                 onClick={() => setMarginModalOpen(true)}
                                 disabled={loading}
-                                className="px-3 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
                             >
-                                <span className="material-symbols-outlined text-[16px] mr-1">percent</span>
+                                <span className="material-symbols-outlined text-[16px]">percent</span>
                                 Update Margin
                             </button>
                             <button
                                 onClick={() => setCategoryModalOpen(true)}
                                 disabled={loading}
-                                className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
                             >
-                                <span className="material-symbols-outlined text-[16px] mr-1">folder</span>
+                                <span className="material-symbols-outlined text-[16px]">folder</span>
                                 Update Category
                             </button>
                             <button
                                 onClick={() => setDeleteModalOpen(true)}
                                 disabled={loading}
-                                className="px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
                             >
-                                <span className="material-symbols-outlined text-[16px] mr-1">delete</span>
+                                <span className="material-symbols-outlined text-[16px]">delete</span>
                                 Delete
                             </button>
                         </div>
@@ -616,10 +652,10 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">API Source</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Source</label>
                                 <select
-                                    value={filterApiSource}
-                                    onChange={(e) => setFilterApiSource(e.target.value)}
+                                    value={filterSource}
+                                    onChange={(e) => setFilterSource(e.target.value)}
                                     className="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
                                 >
                                     <option value="">All Sources</option>
@@ -694,9 +730,9 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                             </th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Product</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Category</th>
-                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">API Source</th>
+                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Source</th>
+                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Cost</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Price</th>
-                                            <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Selling Price</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
                                             <th className="py-4 px-4 text-xs font-semibold text-slate-500 uppercase text-right">Actions</th>
                                         </tr>
@@ -729,9 +765,9 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                                     {product.category?.name}
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    {product.api_source ? (
+                                                    {product.source ? (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                            {product.api_source}
+                                                            {product.source}
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400">
@@ -740,10 +776,10 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                                     )}
                                                 </td>
                                                 <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400">
-                                                    Rp {formatCurrency(product.price)}
+                                                    Rp {formatCurrency(product.cost)}
                                                 </td>
                                                 <td className="py-4 px-4 text-sm font-medium text-slate-900 dark:text-white">
-                                                    Rp {formatCurrency(product.selling_price)}
+                                                    Rp {formatCurrency(product.price)}
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     {product.is_active ? (
@@ -763,6 +799,15 @@ export default function AdminProductsIndex({ products, categories, filters }) {
                                                             className="p-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
                                                         >
                                                             <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                        </Link>
+                                                        <Link
+                                                            href={route('admin.products.destroy', product.id)}
+                                                            method="delete"
+                                                            as="button"
+                                                            onBefore={() => confirm('Are you sure you want to delete this product?')}
+                                                            className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
                                                         </Link>
                                                     </div>
                                                 </td>

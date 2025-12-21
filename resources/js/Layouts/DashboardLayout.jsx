@@ -32,15 +32,15 @@ export default function DashboardLayout({ children }) {
     };
 
     const navigation = [
-        { name: 'Dashboard', href: route('dashboard'), icon: 'dashboard', current: route().current('dashboard') },
-        { name: 'Products', href: route('products.index'), icon: 'inventory_2', current: route().current('products.*') },
-        { name: 'Transactions', href: route('transactions.index'), icon: 'receipt_long', current: route().current('transactions.*') },
-        { name: 'OTP Sessions', href: route('otp-sessions.index'), icon: 'verified_user', current: route().current('otp-sessions.*') },
+        { name: 'Dasbor', href: route('dashboard'), icon: 'dashboard', current: route().current('dashboard') },
+        { name: 'Produk', href: route('products.index'), icon: 'inventory_2', current: route().current('products.*') },
+        { name: 'Transaksi', href: route('transactions.index'), icon: 'receipt_long', current: route().current('transactions.*') },
+        { name: 'Sesi OTP', href: route('otp-sessions.index'), icon: 'verified_user', current: route().current('otp-sessions.*') },
         { name: 'Top Up', href: route('topup.index'), icon: 'account_balance_wallet', current: route().current('topup.*') },
     ];
 
     const adminNavigation = auth.user?.role === 'admin' ? [
-        { name: 'Admin Panel', href: route('admin.dashboard'), icon: 'admin_panel_settings', current: route().current('admin.*') },
+        { name: 'Panel Admin', href: route('admin.dashboard'), icon: 'admin_panel_settings', current: route().current('admin.*') },
     ] : [];
 
     return (
@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }) {
                             </div>
                             <h1 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Fourflazz</h1>
                         </div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs font-normal pl-10">Digital Products</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-normal pl-10">Produk Digital</p>
                     </div>
 
                     {/* Navigation */}
@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }) {
                             <span className="material-symbols-outlined text-[22px]">
                                 {darkMode ? 'light_mode' : 'dark_mode'}
                             </span>
-                            <span className="text-sm font-medium">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                            <span className="text-sm font-medium">{darkMode ? 'Mode Terang' : 'Mode Gelap'}</span>
                         </button>
                         <Link
                             href={route('profile.edit')}
@@ -126,14 +126,14 @@ export default function DashboardLayout({ children }) {
                                 }`}
                         >
                             <span className="material-symbols-outlined text-[22px]">settings</span>
-                            <span className="text-sm font-medium">Settings</span>
+                            <span className="text-sm font-medium">Pengaturan</span>
                         </Link>
                         <button
                             onClick={handleLogout}
                             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
                         >
                             <span className="material-symbols-outlined text-[22px]">logout</span>
-                            <span className="text-sm font-medium">Logout</span>
+                            <span className="text-sm font-medium">Keluar</span>
                         </button>
                         <div className="flex items-center gap-3 mt-4 px-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                             <div className="size-10 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white text-sm font-semibold">
@@ -164,7 +164,7 @@ export default function DashboardLayout({ children }) {
                             <span className="material-symbols-outlined absolute left-3 text-slate-400">search</span>
                             <input
                                 className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-primary placeholder:text-slate-400 text-slate-900 dark:text-white transition-shadow"
-                                placeholder="Search products..."
+                                placeholder="Cari produk..."
                                 type="text"
                             />
                         </div>

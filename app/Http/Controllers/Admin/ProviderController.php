@@ -32,7 +32,7 @@ class ProviderController extends Controller
 
         foreach ($this->providerFactory->getAllProviders() as $name => $provider) {
             // Count synced products for this provider
-            $syncedCount = Product::where('api_source', $name)->count();
+            $syncedCount = Product::where('source', $name)->count();
 
             $providers[] = [
                 'name' => $name,
@@ -205,7 +205,7 @@ class ProviderController extends Controller
                 }
 
                 // Check if product already exists
-                $existingProduct = Product::where('api_source', $provider)
+                $existingProduct = Product::where('source', $provider)
                     ->where('external_code', $externalCode)
                     ->first();
 
@@ -231,11 +231,11 @@ class ProviderController extends Controller
                     'name' => $productName,
                     'slug' => Str::slug($productData['name'] ?? 'product') . '-' . Str::lower($provider) . '-' . Str::random(4),
                     'description' => $productData['description'] ?? null,
-                    'price' => $productData['price'] ?? 0,
-                    'selling_price' => ($productData['price'] ?? 0) * (1 + (\App\Models\Setting::get('product_margin', 10) / 100)),
+                    'cost' => $productData['price'] ?? 0,
+                    'price' => ($productData['price'] ?? 0) * (1 + (\App\Models\Setting::get('product_margin', 10) / 100)),
                     'provider' => $operator, // Operator (XL, Telkomsel, AXIS, etc.)
                     'product_code' => $externalCode,
-                    'api_source' => $provider, // API Provider (KMSP, KAJET, etc.)
+                    'source' => $provider, // API Provider (KMSP, KAJE, etc.)
                     'external_code' => $externalCode,
                     'api_metadata' => $productData['metadata'] ?? [],
                     'type' => $productData['metadata']['type'] ?? 'prepaid',
@@ -249,12 +249,14 @@ class ProviderController extends Controller
                 ];
 
                 if ($existingProduct) {
-                    // Update existing product (except slug)
+                    // Update existing product but preserve its active status
                     unset($productFields['slug']);
+                    unset($productFields['is_active']); // Don't update active status
                     $existingProduct->update($productFields);
                     $stats['updated']++;
                 } else {
-                    // Create new product
+                    // Create new product as inactive for manual review
+                    $productFields['is_active'] = false; // Always inactive for new products
                     Product::create($productFields);
                     $stats['created']++;
                 }
@@ -428,7 +430,7 @@ class ProviderController extends Controller
                 }
 
                 // Find existing product
-                $existingProduct = Product::where('api_source', $provider)
+                $existingProduct = Product::where('source', $provider)
                     ->where('external_code', $externalCode)
                     ->first();
 
@@ -438,14 +440,14 @@ class ProviderController extends Controller
                 }
 
                 // Calculate new selling price with margin
-                $newPrice = $productData['price'] ?? $existingProduct->price;
+                $newCost = $productData['price'] ?? $existingProduct->cost;
                 $margin = \App\Models\Setting::get('product_margin', 10) / 100;
-                $newSellingPrice = $newPrice * (1 + $margin);
+                $newPrice = $newCost * (1 + $margin);
 
-                // Update only stock, price, and stock_status
+                // Update only stock, cost, price, and stock_status
                 $existingProduct->update([
+                    'cost' => $newCost,
                     'price' => $newPrice,
-                    'selling_price' => $newSellingPrice,
                     'stock' => $productData['stock'] ?? $existingProduct->stock,
                     'stock_status' => $productData['stock_status'] ?? $existingProduct->stock_status,
                     'last_stock_check_at' => now(),

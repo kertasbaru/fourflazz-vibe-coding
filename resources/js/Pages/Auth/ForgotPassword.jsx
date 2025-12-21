@@ -13,10 +13,10 @@ export default function ForgotPassword({ status }) {
 
     return (
         <AuthLayout
-            title="Forgot Password?"
-            subtitle="No worries! Enter your email and we'll send you a reset link."
+            title="Lupa Kata Sandi?"
+            subtitle="Jangan khawatir! Masukkan email Anda dan kami akan mengirim tautan reset."
         >
-            <Head title="Forgot Password" />
+            <Head title="Lupa Kata Sandi" />
 
             {status && (
                 <div className="mb-6 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium flex items-center gap-2">
@@ -28,7 +28,7 @@ export default function ForgotPassword({ status }) {
             <form onSubmit={submit} className="space-y-5">
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        Email Address
+                        Alamat Email
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -54,14 +54,14 @@ export default function ForgotPassword({ status }) {
                     disabled={processing}
                     className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {processing ? 'Sending...' : 'Send Reset Link'}
+                    {processing ? 'Mengirim...' : 'Kirim Tautan Reset'}
                 </button>
             </form>
 
             <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                Remember your password?{' '}
+                Ingat kata sandi Anda?{' '}
                 <Link href={route('login')} className="font-semibold text-primary hover:text-primary-dark transition-colors">
-                    Back to login
+                    Kembali ke login
                 </Link>
             </p>
         </AuthLayout>

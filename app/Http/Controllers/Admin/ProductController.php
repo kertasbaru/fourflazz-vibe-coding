@@ -33,12 +33,12 @@ class ProductController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        // Filter by API source
-        if ($request->filled('api_source')) {
-            if ($request->api_source === 'manual') {
-                $query->whereNull('api_source');
+        // Filter by source
+        if ($request->filled('source')) {
+            if ($request->source === 'manual') {
+                $query->whereNull('source');
             } else {
-                $query->where('api_source', $request->api_source);
+                $query->where('source', $request->source);
             }
         }
 
@@ -57,7 +57,7 @@ class ProductController extends Controller
         return Inertia::render('Admin/Products/Index', [
             'products' => $products,
             'categories' => $categories,
-            'filters' => $request->only(['search', 'category', 'status', 'api_source', 'need_otp']),
+            'filters' => $request->only(['search', 'category', 'status', 'source', 'need_otp']),
         ]);
     }
 
@@ -77,9 +77,9 @@ class ProductController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'cost' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
-            'api_source' => 'nullable|string|max:100',
+            'source' => 'nullable|string|max:100',
             'product_code' => 'nullable|string|max:100',
             'type' => 'required|in:prepaid,postpaid',
             'stock' => 'required|integer|min:-1',
@@ -118,9 +118,9 @@ class ProductController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'cost' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
-            'api_source' => 'nullable|string|max:100',
+            'source' => 'nullable|string|max:100',
             'product_code' => 'nullable|string|max:100',
             'type' => 'required|in:prepaid,postpaid',
             'stock' => 'required|integer|min:-1',
@@ -188,6 +188,26 @@ class ProductController extends Controller
     }
 
     /**
+     * Bulk active products.
+     */
+    public function bulkActive(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'required|integer|exists:products,id',
+        ]);
+
+        $count = Product::whereIn('id', $request->product_ids)
+            ->update(['is_active' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$count} product(s) have been activated successfully.",
+            'count' => $count,
+        ]);
+    }
+
+    /**
      * Bulk delete products.
      */
     public function bulkDelete(Request $request)
@@ -235,14 +255,14 @@ class ProductController extends Controller
 
         foreach ($products as $product) {
             if ($request->margin_type === 'percentage') {
-                // Apply percentage margin to base price
-                $newSellingPrice = $product->price * (1 + ($request->margin_value / 100));
+                // Apply percentage margin to cost
+                $newPrice = $product->cost * (1 + ($request->margin_value / 100));
             } else {
-                // Add fixed amount to base price
-                $newSellingPrice = $product->price + $request->margin_value;
+                // Add fixed amount to cost
+                $newPrice = $product->cost + $request->margin_value;
             }
 
-            $product->update(['selling_price' => $newSellingPrice]);
+            $product->update(['price' => $newPrice]);
             $count++;
         }
 
@@ -293,11 +313,11 @@ class ProductController extends Controller
         if ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
-        if ($request->filled('api_source')) {
-            if ($request->api_source === 'manual') {
-                $query->whereNull('api_source');
+        if ($request->filled('source')) {
+            if ($request->source === 'manual') {
+                $query->whereNull('source');
             } else {
-                $query->where('api_source', $request->api_source);
+                $query->where('source', $request->source);
             }
         }
 
@@ -320,9 +340,9 @@ class ProductController extends Controller
                 'description',
                 'category_name',
                 'category_id',
+                'cost',
                 'price',
-                'selling_price',
-                'api_source',
+                'source',
                 'brands',
                 'type',
                 'stock',
@@ -339,9 +359,9 @@ class ProductController extends Controller
                     $product->description,
                     $product->category?->name,
                     $product->category_id,
+                    $product->cost,
                     $product->price,
-                    $product->selling_price,
-                    $product->api_source,
+                    $product->source,
                     is_array($product->brands) ? implode(', ', $product->brands) : '',
                     $product->type,
                     $product->stock,
@@ -420,9 +440,9 @@ class ProductController extends Controller
                     'name' => $rowData['name'] ?? $product?->name ?? 'Unnamed Product',
                     'description' => $rowData['description'] ?? $product?->description ?? null,
                     'category_id' => $categoryId,
-                    'price' => floatval($rowData['price'] ?? $product?->price ?? 0),
-                    'selling_price' => floatval($rowData['selling_price'] ?? $rowData['price'] ?? $product?->selling_price ?? 0),
-                    'api_source' => $rowData['api_source'] ?? $product?->api_source ?? null,
+                    'cost' => floatval($rowData['cost'] ?? $product?->cost ?? 0),
+                    'price' => floatval($rowData['price'] ?? $rowData['cost'] ?? $product?->price ?? 0),
+                    'source' => $rowData['source'] ?? $product?->source ?? null,
                     'brands' => isset($rowData['brands']) ? array_values(array_filter(array_map('trim', explode(',', $rowData['brands'])))) : ($product?->brands ?? []),
                     'product_code' => $rowData['product_code'] ?? $product?->product_code ?? null,
                     'type' => $rowData['type'] ?? $product?->type ?? 'prepaid',
@@ -480,9 +500,9 @@ class ProductController extends Controller
                 'description',
                 'category_name',
                 'category_id',
+                'cost',
                 'price',
-                'selling_price',
-                'api_source',
+                'source',
                 'brands',
                 'type',
                 'stock',
@@ -498,9 +518,9 @@ class ProductController extends Controller
                 'Product description',
                 '', // category_name (optional)
                 '1', // category_id
-                '10000',
-                '12000',
-                'kmsp', // api_source: kmsp, kaje, or empty
+                '10000', // cost
+                '12000', // price
+                'kmsp', // source: kmsp, kaje, or empty
                 'Telkomsel, Indosat', // brands (comma-separated)
                 'prepaid',
                 '-1', // -1 for unlimited

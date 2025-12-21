@@ -41,6 +41,10 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'input_type' => 'nullable|string|in:phone,customer_id,email,text',
+            'category_group' => 'nullable|string|max:255',
+            'badge_label' => 'nullable|string|max:50',
+            'badge_color' => 'nullable|string|max:50',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -73,6 +77,10 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'input_type' => 'nullable|string|in:phone,customer_id,email,text',
+            'category_group' => 'nullable|string|max:255',
+            'badge_label' => 'nullable|string|max:50',
+            'badge_color' => 'nullable|string|max:50',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);

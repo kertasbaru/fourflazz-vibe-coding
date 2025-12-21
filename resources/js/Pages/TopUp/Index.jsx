@@ -51,12 +51,12 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
         const amount = isCustom ? parseInt(customAmount) : selectedAmount;
 
         if (!amount || amount < 10000) {
-            setError('Minimum top up amount is Rp 10.000');
+            setError('Minimum top up Rp 10.000');
             return;
         }
 
         if ((paymentMethod === 'va' || paymentMethod === 'retail') && !bankCode) {
-            setError('Please select a payment channel');
+            setError('Harap pilih metode pembayaran');
             return;
         }
 
@@ -82,11 +82,11 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
             if (data.success) {
                 setPaymentResult(data);
             } else {
-                setError(data.message || 'Failed to create payment. Please try again.');
+                setError(data.message || 'Gagal membuat pembayaran. Silakan coba lagi.');
             }
         } catch (err) {
             console.error('Error:', err);
-            setError('Failed to process top up. Please try again.');
+            setError('Gagal memproses top up. Silakan coba lagi.');
         } finally {
             setLoading(false);
         }
@@ -124,20 +124,20 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
     if (paymentResult) {
         return (
             <DashboardLayout>
-                <Head title="Complete Payment" />
+                <Head title="Selesaikan Pembayaran" />
                 <div className="max-w-2xl mx-auto">
                     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                         <div className="text-center mb-6">
                             <div className="size-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="material-symbols-outlined text-primary text-[32px]">payments</span>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Complete Your Payment</h3>
-                            <p className="text-slate-500 mt-1">Amount: <span className="font-bold text-primary">Rp {formatCurrency(paymentResult.amount)}</span></p>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Selesaikan Pembayaran Anda</h3>
+                            <p className="text-slate-500 mt-1">Jumlah: <span className="font-bold text-primary">Rp {formatCurrency(paymentResult.amount)}</span></p>
                         </div>
 
                         {paymentResult.payment_method === 'qris' && paymentResult.payment_code && (
                             <div className="text-center">
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Scan this QR code with your e-wallet app</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Pindai kode QR ini dengan aplikasi e-wallet Anda</p>
                                 <div className="bg-white p-4 rounded-lg inline-block mb-4">
                                     <img
                                         src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentResult.payment_code)}`}
@@ -145,16 +145,16 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                         className="w-48 h-48"
                                     />
                                 </div>
-                                <p className="text-xs text-slate-500">Supported: GoPay, OVO, DANA, LinkAja, ShopeePay, etc.</p>
+                                <p className="text-xs text-slate-500">Didukung: GoPay, OVO, DANA, LinkAja, ShopeePay, dll.</p>
                             </div>
                         )}
 
                         {paymentResult.payment_method === 'va' && (
                             <div className="text-center">
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Transfer to Virtual Account</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Transfer ke Virtual Account</p>
                                 <p className="text-sm font-medium text-slate-900 dark:text-white mb-4">{paymentResult.bank_code}</p>
                                 <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 mb-4">
-                                    <p className="text-sm text-slate-500 mb-1">VA Number</p>
+                                    <p className="text-sm text-slate-500 mb-1">Nomor VA</p>
                                     <p className="text-2xl font-bold font-mono text-primary tracking-wider">{paymentResult.payment_code}</p>
                                 </div>
                                 <button
@@ -162,17 +162,17 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                     className="text-sm text-primary hover:underline flex items-center justify-center gap-1 mx-auto"
                                 >
                                     <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                                    Copy VA Number
+                                    Salin Nomor VA
                                 </button>
                             </div>
                         )}
 
                         {paymentResult.payment_method === 'retail' && (
                             <div className="text-center">
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Pay at</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Bayar di</p>
                                 <p className="text-lg font-bold text-slate-900 dark:text-white mb-4">{paymentResult.bank_code}</p>
                                 <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 mb-4">
-                                    <p className="text-sm text-slate-500 mb-1">Payment Code</p>
+                                    <p className="text-sm text-slate-500 mb-1">Kode Pembayaran</p>
                                     <p className="text-2xl font-bold font-mono text-primary tracking-wider">{paymentResult.payment_code}</p>
                                 </div>
                                 <button
@@ -180,14 +180,14 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                     className="text-sm text-primary hover:underline flex items-center justify-center gap-1 mx-auto"
                                 >
                                     <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                                    Copy Payment Code
+                                    Salin Kode Pembayaran
                                 </button>
                             </div>
                         )}
 
                         {paymentResult.expires_at && (
                             <p className="text-center text-xs text-slate-500 mt-4">
-                                Expires: {paymentResult.expires_at}
+                                Kedaluwarsa: {paymentResult.expires_at}
                             </p>
                         )}
 
@@ -196,13 +196,13 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                 onClick={resetPayment}
                                 className="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
                             >
-                                Create New Payment
+                                Buat Pembayaran Baru
                             </button>
                             <button
                                 onClick={() => window.location.reload()}
                                 className="flex-1 py-3 bg-primary text-white font-medium rounded-lg hover:bg-blue-700"
                             >
-                                Check Status
+                                Cek Status
                             </button>
                         </div>
                     </div>
@@ -213,14 +213,14 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
 
     return (
         <DashboardLayout>
-            <Head title="Top Up Balance" />
+            <Head title="Top Up Saldo" />
 
             <div className="max-w-4xl mx-auto">
                 <div className="flex flex-col gap-6">
                     {/* Header */}
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Top Up Balance</h2>
-                        <p className="text-slate-500 dark:text-slate-400">Add funds to your account</p>
+                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Top Up Saldo</h2>
+                        <p className="text-slate-500 dark:text-slate-400">Tambahkan dana ke akun Anda</p>
                     </div>
 
                     {/* Flash Messages */}
@@ -241,7 +241,7 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                     <div className="bg-gradient-to-r from-primary to-blue-600 rounded-xl p-6 text-white shadow-lg">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-blue-100 text-sm mb-1">Current Balance</p>
+                                <p className="text-blue-100 text-sm mb-1">Saldo Saat Ini</p>
                                 <h3 className="text-3xl font-bold">{formattedBalance}</h3>
                             </div>
                             <div className="size-16 bg-white/20 rounded-full flex items-center justify-center">
@@ -252,7 +252,7 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
 
                     {/* Top Up Form */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Select Amount</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Pilih Jumlah</h3>
 
                         {/* Preset Amounts */}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
@@ -273,7 +273,7 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                         {/* Custom Amount */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Or enter custom amount
+                                Atau masukkan jumlah custom
                             </label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">Rp</span>
@@ -294,15 +294,15 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                         {/* Payment Method Selection */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                                Payment Method
+                                Metode Pembayaran
                             </label>
                             <div className="grid grid-cols-3 gap-3 mb-4">
                                 <button
                                     type="button"
                                     onClick={() => { setPaymentMethod('qris'); setBankCode(''); }}
                                     className={`p-4 rounded-lg border-2 text-center transition-colors ${paymentMethod === 'qris'
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-[24px] mb-1 text-primary">qr_code_2</span>
@@ -312,19 +312,19 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                     type="button"
                                     onClick={() => { setPaymentMethod('va'); setBankCode(''); }}
                                     className={`p-4 rounded-lg border-2 text-center transition-colors ${paymentMethod === 'va'
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-[24px] mb-1 text-primary">account_balance</span>
-                                    <p className="text-sm font-medium text-slate-900 dark:text-white">Bank Transfer</p>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">Transfer Bank</p>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => { setPaymentMethod('retail'); setBankCode(''); }}
                                     className={`p-4 rounded-lg border-2 text-center transition-colors ${paymentMethod === 'retail'
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-[24px] mb-1 text-primary">storefront</span>
@@ -341,8 +341,8 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                             type="button"
                                             onClick={() => setBankCode(channel.code)}
                                             className={`p-3 rounded-lg border text-left transition-colors ${bankCode === channel.code
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
                                                 }`}
                                         >
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">{channel.name}</p>
@@ -365,8 +365,8 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                                             type="button"
                                             onClick={() => setBankCode(channel.code)}
                                             className={`p-3 rounded-lg border text-left transition-colors ${bankCode === channel.code
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'
                                                 }`}
                                         >
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">{channel.name}</p>
@@ -379,10 +379,10 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                             )}
 
                             {paymentMethod === 'va' && vaChannels.length === 0 && (
-                                <p className="text-sm text-amber-600">VA channels not available. Please try QRIS.</p>
+                                <p className="text-sm text-amber-600">Kanal VA tidak tersedia. Silakan coba QRIS.</p>
                             )}
                             {paymentMethod === 'retail' && retailChannels.length === 0 && (
-                                <p className="text-sm text-amber-600">Retail channels not available. Please try QRIS.</p>
+                                <p className="text-sm text-amber-600">Kanal Retail tidak tersedia. Silakan coba QRIS.</p>
                             )}
                         </div>
 
@@ -396,7 +396,7 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                         {/* Summary */}
                         <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mb-4">
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-600 dark:text-slate-400">Amount to add</span>
+                                <span className="text-slate-600 dark:text-slate-400">Jumlah yang ditambahkan</span>
                                 <span className="text-2xl font-bold text-primary">
                                     Rp {formatCurrency(isCustom ? (parseInt(customAmount) || 0) : selectedAmount)}
                                 </span>
@@ -412,33 +412,33 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                             {loading ? (
                                 <>
                                     <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                    Processing...
+                                    Memproses...
                                 </>
                             ) : (
                                 <>
                                     <span className="material-symbols-outlined">payments</span>
-                                    Pay Now
+                                    Bayar Sekarang
                                 </>
                             )}
                         </button>
 
                         <p className="text-center text-xs text-slate-500 mt-3">
-                            Secure payment powered by SanPay
+                            Pembayaran aman didukung oleh SanPay
                         </p>
                     </div>
 
                     {/* Top Up History */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Top Up History</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Riwayat Top Up</h3>
 
                         {topUpRequests.data && topUpRequests.data.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="border-b border-slate-200 dark:border-slate-700">
-                                            <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                                            <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                                            <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Method</th>
+                                            <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Tanggal</th>
+                                            <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Jumlah</th>
+                                            <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Metode</th>
                                             <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase text-right">Status</th>
                                         </tr>
                                     </thead>
@@ -471,7 +471,7 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, v
                         ) : (
                             <div className="text-center py-8 text-slate-500">
                                 <span className="material-symbols-outlined text-[48px] mb-2">receipt_long</span>
-                                <p>No top up history yet</p>
+                                <p>Belum ada riwayat top up</p>
                             </div>
                         )}
                     </div>

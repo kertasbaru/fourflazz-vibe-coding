@@ -16,6 +16,10 @@ export default function AdminCategoryForm({ category }) {
         description: category?.description || '',
         is_active: category?.is_active ?? true,
         sort_order: category?.sort_order || 0,
+        input_type: category?.input_type || '',
+        category_group: category?.category_group || '',
+        badge_label: category?.badge_label || '',
+        badge_color: category?.badge_color || '',
     });
 
     const handleSubmit = (e) => {
@@ -71,8 +75,8 @@ export default function AdminCategoryForm({ category }) {
                                         type="button"
                                         onClick={() => setData('icon', icon)}
                                         className={`p-3 rounded-lg border-2 flex items-center justify-center transition-colors ${data.icon === icon
-                                                ? 'border-primary bg-primary/10 text-primary'
-                                                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary/50'
+                                            ? 'border-primary bg-primary/10 text-primary'
+                                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary/50'
                                             }`}
                                     >
                                         <span className="material-symbols-outlined">{icon}</span>
@@ -92,6 +96,69 @@ export default function AdminCategoryForm({ category }) {
                                 placeholder="Brief description of this category"
                                 className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Input Type
+                            </label>
+                            <select
+                                value={data.input_type}
+                                onChange={(e) => setData('input_type', e.target.value)}
+                                className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                            >
+                                <option value="">None</option>
+                                <option value="phone">Phone Number</option>
+                                <option value="customer_id">Customer ID</option>
+                                <option value="email">Email</option>
+                                <option value="text">Text</option>
+                            </select>
+                            {errors.input_type && <p className="text-red-500 text-sm mt-1">{errors.input_type}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Category Group
+                            </label>
+                            <input
+                                type="text"
+                                value={data.category_group}
+                                onChange={(e) => setData('category_group', e.target.value)}
+                                placeholder="e.g., Pulsa & Data, Financial, Games"
+                                className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                            />
+                            {errors.category_group && <p className="text-red-500 text-sm mt-1">{errors.category_group}</p>}
+                            <p className="text-xs text-slate-500 mt-1">Used to group related categories together</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Badge Label
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.badge_label}
+                                    onChange={(e) => setData('badge_label', e.target.value)}
+                                    placeholder="e.g., New, Popular"
+                                    className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                                />
+                                {errors.badge_label && <p className="text-red-500 text-sm mt-1">{errors.badge_label}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Badge Color
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.badge_color}
+                                    onChange={(e) => setData('badge_color', e.target.value)}
+                                    placeholder="e.g., blue, green, red"
+                                    className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                                />
+                                {errors.badge_color && <p className="text-red-500 text-sm mt-1">{errors.badge_color}</p>}
+                            </div>
                         </div>
 
                         <div>

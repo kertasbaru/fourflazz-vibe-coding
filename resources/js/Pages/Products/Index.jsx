@@ -25,7 +25,7 @@ function ProductCard({ product }) {
                     )}
                     <div className="flex items-center justify-between mt-3">
                         <p className="text-lg font-bold text-primary">
-                            Rp {new Intl.NumberFormat('id-ID').format(product.selling_price)}
+                            Rp {new Intl.NumberFormat('id-ID').format(product.price)}
                         </p>
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                             <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
@@ -59,14 +59,14 @@ export default function ProductsIndex({ products, categories, brands, filters })
 
     return (
         <DashboardLayout>
-            <Head title="Products" />
+            <Head title="Produk" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Products</h2>
-                        <p className="text-slate-500 dark:text-slate-400">Browse and purchase digital products</p>
+                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Produk</h2>
+                        <p className="text-slate-500 dark:text-slate-400">Jelajahi dan beli produk digital</p>
                     </div>
 
                     {/* Search */}
@@ -77,7 +77,7 @@ export default function ProductsIndex({ products, categories, brands, filters })
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search products..."
+                                placeholder="Cari produk..."
                                 className="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-slate-400 text-slate-900 dark:text-white"
                             />
                         </div>
@@ -85,7 +85,7 @@ export default function ProductsIndex({ products, categories, brands, filters })
                             type="submit"
                             className="h-10 px-4 bg-primary hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
                         >
-                            Search
+                            Cari
                         </button>
                     </form>
                 </div>
@@ -102,7 +102,7 @@ export default function ProductsIndex({ products, categories, brands, filters })
                             : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                             }`}
                     >
-                        All Products
+                        Semua Produk
                     </button>
                     {categories.map((category) => (
                         <button
@@ -136,7 +136,7 @@ export default function ProductsIndex({ products, categories, brands, filters })
                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
                                 }`}
                         >
-                            All
+                            Semua
                         </button>
                         {brands.map((brand) => (
                             <button
@@ -172,12 +172,12 @@ export default function ProductsIndex({ products, categories, brands, filters })
                                 <Link
                                     href={products.prev_page_url || '#'}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${products.prev_page_url
-                                            ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed pointer-events-none'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed pointer-events-none'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-                                    <span className="hidden sm:inline">Prev</span>
+                                    <span className="hidden sm:inline">Sebelumnya</span>
                                 </Link>
 
                                 {/* Page Numbers - Hidden on mobile, shown on sm+ */}
@@ -209,10 +209,10 @@ export default function ProductsIndex({ products, categories, brands, filters })
                                                 key={index}
                                                 href={link.url || '#'}
                                                 className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors text-center ${link.active
-                                                        ? 'bg-primary text-white'
-                                                        : link.url
-                                                            ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                                    ? 'bg-primary text-white'
+                                                    : link.url
+                                                        ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                                                     }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
@@ -229,11 +229,11 @@ export default function ProductsIndex({ products, categories, brands, filters })
                                 <Link
                                     href={products.next_page_url || '#'}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${products.next_page_url
-                                            ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed pointer-events-none'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed pointer-events-none'
                                         }`}
                                 >
-                                    <span className="hidden sm:inline">Next</span>
+                                    <span className="hidden sm:inline">Berikutnya</span>
                                     <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                                 </Link>
                             </div>
@@ -242,8 +242,8 @@ export default function ProductsIndex({ products, categories, brands, filters })
                 ) : (
                     <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                         <span className="material-symbols-outlined text-[64px] text-slate-300 dark:text-slate-600 mb-4">inventory_2</span>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No products found</h3>
-                        <p className="text-slate-500 dark:text-slate-400">Try adjusting your filters or search query</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Produk tidak ditemukan</h3>
+                        <p className="text-slate-500 dark:text-slate-400">Coba sesuaikan filter atau pencarian Anda</p>
                     </div>
                 )}
             </div>

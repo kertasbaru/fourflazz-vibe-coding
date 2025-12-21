@@ -8,9 +8,9 @@ export default function AdminProductForm({ categories, product }) {
         category_id: product?.category_id || '',
         name: product?.name || '',
         description: product?.description || '',
+        cost: product?.cost || '',
         price: product?.price || '',
-        selling_price: product?.selling_price || '',
-        api_source: product?.api_source || '',
+        source: product?.source || '',
         product_code: product?.product_code || '',
         type: product?.type || 'prepaid',
         stock: product?.stock ?? -1,
@@ -35,7 +35,7 @@ export default function AdminProductForm({ categories, product }) {
 
             <div className="max-w-2xl mx-auto">
                 {/* Breadcrumb */}
-                <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">
+                <nav className="flex flex-wrap items-center gap-2 text-sm text-slate-500 mb-6">
                     <Link href={route('admin.products.index')} className="hover:text-primary">Products</Link>
                     <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                     <span className="text-slate-900 dark:text-white">{isEditing ? 'Edit' : 'Create'}</span>
@@ -82,14 +82,14 @@ export default function AdminProductForm({ categories, product }) {
                             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                         </div>
 
-                        {/* API Source (Provider) */}
+                        {/* Source (Provider) */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                API Source
+                                Source
                             </label>
                             <select
-                                value={data.api_source}
-                                onChange={(e) => setData('api_source', e.target.value)}
+                                value={data.source}
+                                onChange={(e) => setData('source', e.target.value)}
                                 className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
                             >
                                 <option value="">Manual (No API)</option>
@@ -147,11 +147,24 @@ export default function AdminProductForm({ categories, product }) {
                             )}
                         </div>
 
-                        {/* Price & Selling Price */}
+                        {/* Cost & Price */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Cost Price *
+                                    Cost *
+                                </label>
+                                <input
+                                    type="number"
+                                    value={data.cost}
+                                    onChange={(e) => setData('cost', e.target.value)}
+                                    placeholder="0"
+                                    className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                                />
+                                {errors.cost && <p className="text-red-500 text-sm mt-1">{errors.cost}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Price *
                                 </label>
                                 <input
                                     type="number"
@@ -161,19 +174,6 @@ export default function AdminProductForm({ categories, product }) {
                                     className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
                                 />
                                 {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Selling Price *
-                                </label>
-                                <input
-                                    type="number"
-                                    value={data.selling_price}
-                                    onChange={(e) => setData('selling_price', e.target.value)}
-                                    placeholder="0"
-                                    className="w-full h-10 px-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
-                                />
-                                {errors.selling_price && <p className="text-red-500 text-sm mt-1">{errors.selling_price}</p>}
                             </div>
                         </div>
 

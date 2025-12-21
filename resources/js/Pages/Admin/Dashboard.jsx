@@ -25,13 +25,13 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
 
     return (
         <AdminLayout>
-            <Head title="Admin Dashboard" />
+            <Head title="Dasbor Admin" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 {/* Header */}
                 <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h2>
-                    <p className="text-slate-500 dark:text-slate-400">Overview of your platform</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Dasbor Admin</h2>
+                    <p className="text-slate-500 dark:text-slate-400">Ikhtisar platform Anda</p>
                 </div>
 
                 {/* Stats Grid */}
@@ -39,30 +39,30 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
                     <StatsCard
                         icon="group"
                         iconBg="bg-blue-50 dark:bg-blue-900/20 text-blue-600"
-                        title="Total Users"
+                        title="Total Pengguna"
                         value={stats.totalUsers}
-                        subtitle={`+${stats.newUsersThisMonth} this month`}
+                        subtitle={`+${stats.newUsersThisMonth} bulan ini`}
                     />
                     <StatsCard
                         icon="inventory_2"
                         iconBg="bg-purple-50 dark:bg-purple-900/20 text-purple-600"
-                        title="Products"
+                        title="Produk"
                         value={stats.totalProducts}
-                        subtitle={`${stats.activeProducts} active`}
+                        subtitle={`${stats.activeProducts} aktif`}
                     />
                     <StatsCard
                         icon="receipt_long"
                         iconBg="bg-amber-50 dark:bg-amber-900/20 text-amber-600"
-                        title="Transactions"
+                        title="Transaksi"
                         value={stats.totalTransactions}
-                        subtitle={`${stats.successfulTransactions} successful`}
+                        subtitle={`${stats.successfulTransactions} berhasil`}
                     />
                     <StatsCard
                         icon="payments"
                         iconBg="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600"
-                        title="Total Revenue"
+                        title="Total Pendapatan"
                         value={`Rp ${formatCurrency(stats.totalRevenue)}`}
-                        subtitle={`Rp ${formatCurrency(stats.todayRevenue)} today`}
+                        subtitle={`Rp ${formatCurrency(stats.todayRevenue)} hari ini`}
                     />
                 </div>
 
@@ -71,19 +71,19 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
                     <StatsCard
                         icon="category"
                         iconBg="bg-pink-50 dark:bg-pink-900/20 text-pink-600"
-                        title="Categories"
+                        title="Kategori"
                         value={stats.totalCategories}
                     />
                     <StatsCard
                         icon="account_balance_wallet"
                         iconBg="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600"
-                        title="Total Top-ups"
+                        title="Total Top-up"
                         value={`Rp ${formatCurrency(stats.totalTopUps)}`}
                     />
                     <StatsCard
                         icon="pending"
                         iconBg="bg-orange-50 dark:bg-orange-900/20 text-orange-600"
-                        title="Pending Top-ups"
+                        title="Top-up Menunggu"
                         value={stats.pendingTopUps}
                     />
                 </div>
@@ -91,7 +91,7 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
                 {/* Chart */}
                 {chartData && chartData.length > 0 && (
                     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Last 7 Days</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">7 Hari Terakhir</h3>
                         <div className="flex items-end gap-4 h-48">
                             {chartData.map((day, index) => (
                                 <div key={index} className="flex-1 flex flex-col items-center gap-2">
@@ -114,17 +114,17 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
 
                 {/* Recent Transactions */}
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Transactions</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Transaksi Terbaru</h3>
                     {recentTransactions && recentTransactions.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="border-b border-slate-200 dark:border-slate-700">
-                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">User</th>
-                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Product</th>
-                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Pengguna</th>
+                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Produk</th>
+                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Jumlah</th>
                                         <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                                        <th className="py-3 px-2 text-xs font-semibold text-slate-500 uppercase">Tanggal</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -132,11 +132,11 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
                                         <tr key={transaction.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                             <td className="py-3 px-2">
                                                 <span className="text-sm font-medium text-slate-900 dark:text-white">
-                                                    {transaction.user?.name || 'Unknown'}
+                                                    {transaction.user?.name || 'Tidak Diketahui'}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-2 text-sm text-slate-600 dark:text-slate-400">
-                                                {transaction.product?.name || 'Unknown'}
+                                                {transaction.product?.name || 'Tidak Diketahui'}
                                             </td>
                                             <td className="py-3 px-2 text-sm font-semibold text-slate-900 dark:text-white">
                                                 Rp {formatCurrency(transaction.amount)}
@@ -158,7 +158,7 @@ export default function AdminDashboard({ stats, recentTransactions, chartData })
                             </table>
                         </div>
                     ) : (
-                        <p className="text-center py-8 text-slate-500">No transactions yet</p>
+                        <p className="text-center py-8 text-slate-500">Belum ada transaksi</p>
                     )}
                 </div>
             </div>

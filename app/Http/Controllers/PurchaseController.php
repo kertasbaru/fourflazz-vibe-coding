@@ -48,7 +48,7 @@ class PurchaseController extends Controller
         }
 
         // Check if product is from KMSP
-        if ($product->api_source !== 'kmsp') {
+        if ($product->source !== 'kmsp') {
             return response()->json([
                 'success' => false,
                 'message' => 'Purchase is only supported for KMSP products at this time.',
@@ -99,11 +99,11 @@ class PurchaseController extends Controller
         }
 
         // Check user balance (if using balance payment)
-        if ($paymentMethod === 'BALANCE' && $user->balance < $product->selling_price) {
+        if ($paymentMethod === 'BALANCE' && $user->balance < $product->price) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient balance. Please top up your account.',
-                'required_balance' => $product->selling_price,
+                'required_balance' => $product->price,
                 'current_balance' => $user->balance,
             ], 400);
         }
@@ -118,8 +118,8 @@ class PurchaseController extends Controller
                 'product_id' => $product->id,
                 'reference_number' => $referenceNumber,
                 'phone_target' => $phone,
-                'amount' => $product->selling_price,
-                'profit' => $product->selling_price - $product->price,
+                'amount' => $product->price,
+                'profit' => $product->price - $product->cost,
                 'status' => 'pending',
                 'notes' => json_encode([
                     'api_source' => 'kmsp',
@@ -131,7 +131,7 @@ class PurchaseController extends Controller
 
             // Deduct balance if using balance payment
             if ($paymentMethod === 'BALANCE') {
-                $user->decrement('balance', (float) $product->selling_price);
+                $user->decrement('balance', (float) $product->price);
             }
 
             // Call KMSP API to purchase
@@ -141,21 +141,21 @@ class PurchaseController extends Controller
                     $phone,
                     $accessToken,
                     $paymentMethod,
-                    (float) $product->price,
+                    (float) $product->cost,
                     $request->input('ewallet_number')
                 );
             } else {
                 $result = $this->kmspService->purchaseWithoutOtp(
                     $product->external_code,
                     $phone,
-                    (float) $product->price
+                    (float) $product->cost
                 );
             }
 
             if (!$result['success']) {
                 // Refund balance if purchase failed
                 if ($paymentMethod === 'BALANCE') {
-                    $user->increment('balance', (float) $product->selling_price);
+                    $user->increment('balance', (float) $product->price);
                 }
 
                 $transaction->update([
@@ -238,7 +238,7 @@ class PurchaseController extends Controller
      */
     public function requirements(Product $product): JsonResponse
     {
-        if ($product->api_source !== 'kmsp') {
+        if ($product->source !== 'kmsp') {
             return response()->json([
                 'success' => false,
                 'message' => 'Purchase requirements only available for KMSP products.',
@@ -267,7 +267,7 @@ class PurchaseController extends Controller
                 'requires_otp' => $requiresOtp,
                 'active_sessions' => $activeSessions,
                 'available_payment_methods' => $metadata['available_payment_methods'] ?? ['BALANCE'],
-                'price' => $product->selling_price,
+                'price' => $product->price,
                 'price_formatted' => $product->formatted_price,
             ],
         ]);

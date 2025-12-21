@@ -33,6 +33,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     Route::post('/products/{product}/purchase', [ProductController::class, 'purchase'])->name('products.purchase');
 
+    // Categories
+    Route::get('/categories', [App\Http\Controllers\CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/{category}', [App\Http\Controllers\CategoryController::class, 'show'])->name('categories.show');
+    Route::post('/categories/{category}/products-by-input', [ProductController::class, 'getProductsByInput'])->name('categories.products-by-input');
+
     // Top-up
     Route::get('/topup', [TopUpController::class, 'index'])->name('topup.index');
     Route::post('/topup', [TopUpController::class, 'store'])->name('topup.store');
@@ -83,6 +88,7 @@ Route::prefix('admin')
         // Products
         Route::resource('products', Admin\ProductController::class);
         Route::post('products/bulk-inactive', [Admin\ProductController::class, 'bulkInactive'])->name('products.bulk-inactive');
+        Route::post('products/bulk-active', [Admin\ProductController::class, 'bulkActive'])->name('products.bulk-active');
         Route::post('products/bulk-delete', [Admin\ProductController::class, 'bulkDelete'])->name('products.bulk-delete');
         Route::post('products/bulk-margin', [Admin\ProductController::class, 'bulkUpdateMargin'])->name('products.bulk-margin');
         Route::post('products/bulk-category', [Admin\ProductController::class, 'bulkUpdateCategory'])->name('products.bulk-category');

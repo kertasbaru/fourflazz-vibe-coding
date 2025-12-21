@@ -19,10 +19,10 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <AuthLayout
-            title="Sign In to Fourflazz"
-            subtitle="Access your account to buy digital products instantly."
+            title="Masuk ke Fourflazz"
+            subtitle="Akses akun Anda untuk membeli produk digital secara instan."
         >
-            <Head title="Log in" />
+            <Head title="Masuk" />
 
             {status && (
                 <div className="mb-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
@@ -58,7 +58,7 @@ export default function Login({ status, canResetPassword }) {
                     <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-[#1a2332] text-slate-500 dark:text-slate-400">Or continue with email</span>
+                    <span className="px-2 bg-white dark:bg-[#1a2332] text-slate-500 dark:text-slate-400">Atau lanjutkan dengan email</span>
                 </div>
             </div>
 
@@ -66,7 +66,7 @@ export default function Login({ status, canResetPassword }) {
             <form onSubmit={submit} className="space-y-5">
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        Email Address
+                        Alamat Email
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -88,7 +88,7 @@ export default function Login({ status, canResetPassword }) {
 
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        Password
+                        Kata Sandi
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -128,7 +128,7 @@ export default function Login({ status, canResetPassword }) {
                             className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
                         />
                         <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">
-                            Remember me
+                            Ingat saya
                         </label>
                     </div>
                     {canResetPassword && (
@@ -137,7 +137,7 @@ export default function Login({ status, canResetPassword }) {
                                 href={route('password.request')}
                                 className="font-medium text-primary hover:text-primary-dark transition-colors"
                             >
-                                Forgot password?
+                                Lupa kata sandi?
                             </Link>
                         </div>
                     )}
@@ -148,14 +148,14 @@ export default function Login({ status, canResetPassword }) {
                     disabled={processing}
                     className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {processing ? 'Signing in...' : 'Sign In'}
+                    {processing ? 'Masuk...' : 'Masuk'}
                 </button>
             </form>
 
             <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                Don't have an account?{' '}
+                Belum punya akun?{' '}
                 <Link href={route('register')} className="font-semibold text-primary hover:text-primary-dark transition-colors">
-                    Create free account
+                    Buat akun gratis
                 </Link>
             </p>
         </AuthLayout>

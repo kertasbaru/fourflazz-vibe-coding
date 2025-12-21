@@ -16,10 +16,10 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'cost',
         'price',
-        'selling_price',
         'product_code',
-        'api_source',
+        'source',
         'external_code',
         'api_metadata',
         'type',
@@ -33,8 +33,8 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'cost' => 'decimal:2',
         'price' => 'decimal:2',
-        'selling_price' => 'decimal:2',
         'is_active' => 'boolean',
         'api_metadata' => 'array',
         'brands' => 'array',
@@ -87,7 +87,7 @@ class Product extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return 'Rp ' . number_format($this->selling_price, 0, ',', '.');
+        return 'Rp ' . number_format($this->price, 0, ',', '.');
     }
 
     /**
@@ -95,7 +95,7 @@ class Product extends Model
      */
     public function getProfit(): float
     {
-        return $this->selling_price - $this->price;
+        return $this->price - $this->cost;
     }
 
     /**

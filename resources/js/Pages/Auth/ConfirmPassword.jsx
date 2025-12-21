@@ -17,10 +17,10 @@ export default function ConfirmPassword() {
 
     return (
         <AuthLayout
-            title="Confirm Password"
-            subtitle="This is a secure area. Please confirm your password to continue."
+            title="Konfirmasi Kata Sandi"
+            subtitle="Ini area aman. Harap konfirmasi kata sandi Anda untuk melanjutkan."
         >
-            <Head title="Confirm Password" />
+            <Head title="Konfirmasi Kata Sandi" />
 
             {/* Security Icon */}
             <div className="flex justify-center mb-6">
@@ -32,7 +32,7 @@ export default function ConfirmPassword() {
             <form onSubmit={submit} className="space-y-5">
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        Password
+                        Kata Sandi
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -43,7 +43,7 @@ export default function ConfirmPassword() {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             className="block w-full pl-10 pr-10 py-3 border border-slate-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-[#131b26] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Enter your password"
+                            placeholder="Masukkan kata sandi Anda"
                             autoComplete="current-password"
                             autoFocus
                         />
@@ -70,12 +70,12 @@ export default function ConfirmPassword() {
                     {processing ? (
                         <>
                             <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>
-                            Confirming...
+                            Mengkonfirmasi...
                         </>
                     ) : (
                         <>
                             <span className="material-symbols-outlined text-lg">verified_user</span>
-                            Confirm Password
+                            Konfirmasi Kata Sandi
                         </>
                     )}
                 </button>

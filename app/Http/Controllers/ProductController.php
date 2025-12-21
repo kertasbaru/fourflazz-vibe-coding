@@ -57,6 +57,46 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Get products for a category filtered by phone prefix or customer ID.
+     */
+    public function getProductsByInput(Request $request, ProductCategory $category)
+    {
+        $request->validate([
+            'input_value' => 'required|string',
+        ]);
+
+        $inputValue = $request->input_value;
+
+        // Get all active products in this category
+        $allProducts = Product::active()
+            ->where('category_id', $category->id)
+            ->with('category')
+            ->ordered()
+            ->get();
+
+        // If category requires phone number, filter by phone prefix matching
+        if ($category->requiresPhoneNumber()) {
+            // Filter products using their stored prefixes
+            $products = $allProducts->filter(function ($product) use ($inputValue) {
+                return $product->matchesPrefix($inputValue);
+            })->values();
+
+            // Try to detect brand name from filtered products for display
+            $detectedBrand = $products->first()?->brands[0] ?? null;
+        } else {
+            // For customer ID based products, return all products
+            $products = $allProducts;
+            $detectedBrand = null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'products' => $products,
+            'detected_prefix' => $detectedBrand,
+        ]);
+    }
+
     public function show(Product $product)
     {
         if (!$product->is_active) {
@@ -92,21 +132,21 @@ class ProductController extends Controller
         }
 
         // Check user balance
-        if ($user->balance < $product->selling_price) {
+        if ($user->balance < $product->price) {
             return back()->with('error', 'Insufficient balance. Please top up first.');
         }
 
         try {
             DB::transaction(function () use ($user, $product, $request) {
                 // Deduct balance
-                $user->deductBalance($product->selling_price);
+                $user->deductBalance($product->price);
 
                 // Create transaction
                 Transaction::create([
                     'user_id' => $user->id,
                     'product_id' => $product->id,
                     'phone_target' => $request->phone_target,
-                    'amount' => $product->selling_price,
+                    'amount' => $product->price,
                     'profit' => $product->getProfit(),
                     'reference_number' => Transaction::generateReferenceNumber(),
                     'status' => Transaction::STATUS_PROCESSING,

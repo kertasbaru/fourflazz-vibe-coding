@@ -36,11 +36,17 @@ class DashboardController extends Controller
             ->where('status', TopUpRequest::STATUS_PENDING)
             ->count();
 
-        // Get categories for quick access
+        // Get categories for quick access (limited to 8)
         $categories = ProductCategory::active()
             ->ordered()
-            ->take(6)
+            ->take(8)
             ->get();
+
+        // Get all categories grouped by category_group for "View All"
+        $allCategories = ProductCategory::active()
+            ->grouped()
+            ->get()
+            ->groupBy('category_group');
 
         // Get popular products
         $popularProducts = Product::active()
@@ -60,6 +66,7 @@ class DashboardController extends Controller
             ],
             'recentTransactions' => $recentTransactions,
             'categories' => $categories,
+            'allCategories' => $allCategories,
             'popularProducts' => $popularProducts,
         ]);
     }

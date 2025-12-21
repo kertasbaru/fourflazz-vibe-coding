@@ -22,15 +22,15 @@ export default function ResetPassword({ token, email }) {
 
     return (
         <AuthLayout
-            title="Create New Password"
-            subtitle="Choose a strong password to secure your Fourflazz account."
+            title="Buat Kata Sandi Baru"
+            subtitle="Pilih kata sandi yang kuat untuk mengamankan akun Fourflazz Anda."
         >
-            <Head title="Reset Password" />
+            <Head title="Reset Kata Sandi" />
 
             <form onSubmit={submit} className="space-y-5">
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        Email Address
+                        Alamat Email
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -52,7 +52,7 @@ export default function ResetPassword({ token, email }) {
 
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        New Password
+                        Kata Sandi Baru
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -63,7 +63,7 @@ export default function ResetPassword({ token, email }) {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             className="block w-full pl-10 pr-10 py-3 border border-slate-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-[#131b26] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Enter new password"
+                            placeholder="Masukkan kata sandi baru"
                             autoComplete="new-password"
                             autoFocus
                         />
@@ -84,7 +84,7 @@ export default function ResetPassword({ token, email }) {
 
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
-                        Confirm Password
+                        Konfirmasi Kata Sandi
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -95,7 +95,7 @@ export default function ResetPassword({ token, email }) {
                             value={data.password_confirmation}
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             className="block w-full pl-10 pr-10 py-3 border border-slate-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-[#131b26] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Confirm new password"
+                            placeholder="Konfirmasi kata sandi baru"
                             autoComplete="new-password"
                         />
                         <button
@@ -118,7 +118,7 @@ export default function ResetPassword({ token, email }) {
                     disabled={processing}
                     className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {processing ? 'Resetting...' : 'Reset Password'}
+                    {processing ? 'Mereset...' : 'Reset Kata Sandi'}
                 </button>
             </form>
         </AuthLayout>
