@@ -23,11 +23,13 @@ class TopUpRequest extends Model
     protected $fillable = [
         'user_id',
         'amount',
+        'unique_code',
+        'total_amount',
         'order_id',
         'payment_type',
-        'payment_method', // qris, va, retail
-        'payment_code',   // VA number, retail code, or QR content
-        'bank_code',      // For VA: BCA, BNI, etc. For retail: ALFAMART, INDOMARET
+        'payment_method',
+        'payment_code',
+        'bank_code',
         'payment_transaction_id',
         'status',
         'balance_before',
@@ -35,10 +37,12 @@ class TopUpRequest extends Model
         'paid_at',
         'expired_at',
         'payment_response',
+        'payment_proof',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'balance_before' => 'decimal:2',
         'balance_after' => 'decimal:2',
         'paid_at' => 'datetime',
@@ -91,7 +95,7 @@ class TopUpRequest extends Model
         }
 
         $user = $this->user;
-        
+
         $this->update([
             'status' => self::STATUS_PAID,
             'payment_transaction_id' => $transactionId ?: $this->payment_transaction_id,
@@ -128,7 +132,7 @@ class TopUpRequest extends Model
      */
     public function getPaymentMethodLabelAttribute(): string
     {
-        return match($this->payment_method) {
+        return match ($this->payment_method) {
             self::TYPE_QRIS => 'QRIS',
             self::TYPE_VA => 'VA ' . ($this->bank_code ?? ''),
             self::TYPE_RETAIL => $this->bank_code ?? 'Retail',
@@ -141,7 +145,7 @@ class TopUpRequest extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_PENDING => 'amber',
             self::STATUS_PAID => 'emerald',
             self::STATUS_FAILED => 'red',

@@ -36,6 +36,93 @@ class TopUpController extends Controller
         ]);
     }
 
+    /**
+     * Create top-up with unique code for QR payment
+     */
+    public function createTopUp(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:10000|max:10000000'
+        ]);
+
+        $user = $request->user();
+
+        // Generate unique code (001-999)
+        $uniqueCode = rand(1, 999);
+        $totalAmount = $validated['amount'] + $uniqueCode;
+
+        // Create top-up request
+        $topup = TopUpRequest::create([
+            'user_id' => $user->id,
+            'amount' => $validated['amount'],
+            'unique_code' => $uniqueCode,
+            'total_amount' => $totalAmount,
+            'order_id' => TopUpRequest::generateOrderId(),
+            'payment_method' => 'qr_transfer',
+            'status' => TopUpRequest::STATUS_PENDING
+        ]);
+
+        // Get QR code path from settings or use default
+        $qrImagePath = \App\Models\Setting::get('qr_topup_image', null);
+        $qrCodeUrl = $qrImagePath
+            ? asset('storage/' . $qrImagePath)
+            : asset('images/qr-topup.png');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $topup->id,
+                'amount' => $topup->amount,
+                'unique_code' => str_pad($uniqueCode, 3, '0', STR_PAD_LEFT),
+                'total_amount' => $totalAmount,
+                'formatted_total' => number_format($totalAmount, 0, ',', '.'),
+                'qr_code' => $qrCodeUrl
+            ]
+        ]);
+    }
+
+    /**
+     * Upload payment proof
+     */
+    public function uploadProof(Request $request, TopUpRequest $topUpRequest)
+    {
+        // Ensure user owns this request
+        if ($request->user()->id !== $topUpRequest->user_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'payment_proof' => 'required|image|max:5120', // Max 5MB
+        ]);
+
+        try {
+            if ($request->hasFile('payment_proof')) {
+                $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+
+                $topUpRequest->update([
+                    'payment_proof' => $path
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Bukti pembayaran berhasil diupload',
+                    'path' => asset('storage/' . $path)
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Upload error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat upload gambar'
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal mengupload bukti pembayaran'
+        ], 400);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -59,7 +146,7 @@ class TopUpController extends Controller
         ]);
 
         // Create payment based on method
-        $result = match($paymentMethod) {
+        $result = match ($paymentMethod) {
             'qris' => $this->sanPayService->createQris([
                 'amount' => $request->amount,
                 'reference_no' => $orderId,
@@ -89,7 +176,7 @@ class TopUpController extends Controller
         }
 
         // Update top-up request with payment details
-        $paymentCode = match($paymentMethod) {
+        $paymentCode = match ($paymentMethod) {
             'qris' => $result['qr_content'] ?? null,
             'va' => $result['va_number'] ?? null,
             'retail' => $result['payment_code'] ?? null,
@@ -134,7 +221,7 @@ class TopUpController extends Controller
 
         // Find the top-up request
         $referenceNo = $parsed['reference_no'] ?? null;
-        
+
         // For QRIS, try transaction_id if reference_no is empty
         if (!$referenceNo && isset($parsed['transaction_id'])) {
             $topUpRequest = TopUpRequest::where('payment_transaction_id', $parsed['transaction_id'])->first();

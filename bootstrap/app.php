@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'topup/callback',
             'webhook/kaje/transaction', // KAJE webhook for transaction updates
+            'webhook/topup-verification', // QR Top-up verification webhook
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

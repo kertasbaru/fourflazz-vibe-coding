@@ -40,6 +40,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Top-up
     Route::get('/topup', [TopUpController::class, 'index'])->name('topup.index');
+    Route::post('/topup/create', [TopUpController::class, 'createTopUp'])->name('topup.create');
+    Route::post('/topup/{topUpRequest}/upload-proof', [TopUpController::class, 'uploadProof'])->name('topup.upload-proof');
     Route::post('/topup', [TopUpController::class, 'store'])->name('topup.store');
 
     // Transactions
@@ -64,6 +66,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 });
+
+// Webhook for QR Top-up Verification (no auth required)
+Route::post('/webhook/topup-verification', [App\Http\Controllers\WebhookController::class, 'verifyTopUp'])->name('webhook.topup.verify');
 
 // SanPay Callback (no auth required)
 Route::post('/topup/callback', [TopUpController::class, 'callback'])->name('topup.callback');
@@ -112,6 +117,10 @@ Route::prefix('admin')
         Route::post('transactions/{transaction}/update-status', [Admin\TransactionController::class, 'updateStatus'])->name('transactions.update-status');
         Route::post('transactions/{transaction}/check-status', [Admin\TransactionController::class, 'checkStatus'])->name('transactions.check-status');
 
+        // Top Ups
+        Route::get('topups', [Admin\TopUpController::class, 'index'])->name('topups.index');
+        Route::post('topups/{topUpRequest}/update-status', [Admin\TopUpController::class, 'updateStatus'])->name('topups.update-status');
+
         // Providers
         Route::get('providers', [Admin\ProviderController::class, 'index'])->name('providers.index');
         Route::get('providers/all-products', [Admin\ProviderController::class, 'allProducts'])->name('providers.all-products');
@@ -125,6 +134,8 @@ Route::prefix('admin')
         // Settings
         Route::get('settings', [Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::post('settings/upload-qr', [Admin\SettingsController::class, 'uploadQrCode'])->name('settings.upload-qr');
+        Route::delete('settings/delete-qr', [Admin\SettingsController::class, 'deleteQrCode'])->name('settings.delete-qr');
 
         // API Logs
         Route::get('api-logs', [Admin\ApiLogController::class, 'index'])->name('api-logs.index');

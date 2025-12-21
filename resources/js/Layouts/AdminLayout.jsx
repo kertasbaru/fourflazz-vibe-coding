@@ -31,6 +31,7 @@ export default function AdminLayout({ children }) {
         { name: 'Kategori', href: route('admin.categories.index'), icon: 'category', current: route().current('admin.categories.*') },
         { name: 'Pengguna', href: route('admin.users.index'), icon: 'group', current: route().current('admin.users.*') },
         { name: 'Transaksi', href: route('admin.transactions.index'), icon: 'receipt_long', current: route().current('admin.transactions.*') },
+        { name: 'Request Top Up', href: route('admin.topups.index'), icon: 'account_balance_wallet', current: route().current('admin.topups.*') },
         { name: 'Penyedia API', href: route('admin.providers.index'), icon: 'cloud_sync', current: route().current('admin.providers.*') },
         { name: 'Log API', href: route('admin.api-logs.index'), icon: 'history', current: route().current('admin.api-logs.*') },
         { name: 'Log Sistem', href: route('admin.logs.index'), icon: 'terminal', current: route().current('admin.logs.*') },
