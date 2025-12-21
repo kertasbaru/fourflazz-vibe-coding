@@ -76,6 +76,9 @@ Route::post('/topup/callback', [TopUpController::class, 'callback'])->name('topu
 // KAJE Webhook for transaction updates (no auth required)
 Route::post('/webhook/kaje/transaction', [App\Http\Controllers\KajeWebhookController::class, 'handleCallback'])->name('webhook.kaje.transaction');
 
+// MacroDroid Notification Webhook (API Key in Authorization header)
+Route::post('/webhook/macrodroid/notification', [App\Http\Controllers\WebhookController::class, 'handleNotification'])->name('webhook.macrodroid.notification');
+
 // Profile Routes
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -140,6 +143,10 @@ Route::prefix('admin')
         // API Logs
         Route::get('api-logs', [Admin\ApiLogController::class, 'index'])->name('api-logs.index');
         Route::get('api-logs/{log}', [Admin\ApiLogController::class, 'show'])->name('api-logs.show');
+
+        // Webhook Logs
+        Route::get('webhook-logs', [Admin\WebhookLogController::class, 'index'])->name('webhook-logs.index');
+        Route::get('webhook-logs/{log}', [Admin\WebhookLogController::class, 'show'])->name('webhook-logs.show');
 
         // System Logs
         Route::get('logs', [Admin\LogController::class, 'index'])->name('logs.index');

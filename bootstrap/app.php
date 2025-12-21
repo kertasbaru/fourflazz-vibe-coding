@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'topup/callback',
             'webhook/kaje/transaction', // KAJE webhook for transaction updates
             'webhook/topup-verification', // QR Top-up verification webhook
+            'webhook/macrodroid/notification', // MacroDroid notification webhook
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

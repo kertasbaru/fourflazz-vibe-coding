@@ -34,6 +34,7 @@ export default function AdminLayout({ children }) {
         { name: 'Request Top Up', href: route('admin.topups.index'), icon: 'account_balance_wallet', current: route().current('admin.topups.*') },
         { name: 'Penyedia API', href: route('admin.providers.index'), icon: 'cloud_sync', current: route().current('admin.providers.*') },
         { name: 'Log API', href: route('admin.api-logs.index'), icon: 'history', current: route().current('admin.api-logs.*') },
+        { name: 'Log Webhook', href: route('admin.webhook-logs.index'), icon: 'webhook', current: route().current('admin.webhook-logs.*') },
         { name: 'Log Sistem', href: route('admin.logs.index'), icon: 'terminal', current: route().current('admin.logs.*') },
         { name: 'Pengaturan', href: route('admin.settings.index'), icon: 'settings', current: route().current('admin.settings.*') },
     ];
