@@ -31,7 +31,7 @@ export default function SettingsIndex({ settings }) {
 
     return (
         <AdminLayout>
-            <Head title="Settings" />
+            <Head title="Pengaturan" />
 
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
@@ -45,8 +45,8 @@ export default function SettingsIndex({ settings }) {
 
                         {message.text && (
                             <div className={`mb-6 p-4 rounded-lg border ${message.type === 'success'
-                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
-                                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+                                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
                                 }`}>
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-lg">

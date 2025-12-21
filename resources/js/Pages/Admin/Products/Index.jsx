@@ -531,7 +531,7 @@ export default function AdminProductsIndex({ products, categories, filters }) {
 
     return (
         <AdminLayout>
-            <Head title="Manage Products" />
+            <Head title="Kelola Produk" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 {/* Header */}

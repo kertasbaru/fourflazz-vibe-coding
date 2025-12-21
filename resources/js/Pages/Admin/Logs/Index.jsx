@@ -99,7 +99,7 @@ export default function LogsIndex({ logs, filters, stats }) {
 
     return (
         <AdminLayout>
-            <Head title="System Logs" />
+            <Head title="Log Sistem" />
 
             <div className="max-w-7xl mx-auto">
                 {/* Header */}

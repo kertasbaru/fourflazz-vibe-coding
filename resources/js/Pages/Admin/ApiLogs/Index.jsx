@@ -137,7 +137,7 @@ export default function ApiLogsIndex({ logs, stats, providers, users, filters })
 
     return (
         <AdminLayout>
-            <Head title="API Logs" />
+            <Head title="Log API" />
 
             <div className="max-w-7xl mx-auto">
                 {/* Header */}

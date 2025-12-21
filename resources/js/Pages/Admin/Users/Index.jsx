@@ -14,7 +14,7 @@ export default function AdminUsersIndex({ users, filters }) {
 
     return (
         <AdminLayout>
-            <Head title="Manage Users" />
+            <Head title="Kelola Pengguna" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -71,8 +71,8 @@ export default function AdminUsersIndex({ users, filters }) {
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
-                                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
                                                         }`}>
                                                         {user.role}
                                                     </span>

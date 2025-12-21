@@ -33,7 +33,7 @@ export default function AdminCategoryForm({ category }) {
 
     return (
         <AdminLayout>
-            <Head title={isEditing ? 'Edit Category' : 'Create Category'} />
+            <Head title={isEditing ? 'Edit Kategori' : 'Buat Kategori'} />
 
             <div className="max-w-2xl mx-auto">
                 <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">

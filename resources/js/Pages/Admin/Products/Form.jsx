@@ -31,7 +31,7 @@ export default function AdminProductForm({ categories, product }) {
 
     return (
         <AdminLayout>
-            <Head title={isEditing ? 'Edit Product' : 'Create Product'} />
+            <Head title={isEditing ? 'Edit Produk' : 'Buat Produk'} />
 
             <div className="max-w-2xl mx-auto">
                 {/* Breadcrumb */}

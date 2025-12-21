@@ -49,13 +49,13 @@ export default function Edit({ mustVerifyEmail, status }) {
 
     return (
         <DashboardLayout>
-            <Head title="Profile Settings" />
+            <Head title="Pengaturan Profil" />
 
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-6">
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Profile Settings</h2>
-                    <p className="text-slate-500 dark:text-slate-400">Manage your account settings and preferences</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Pengaturan Profil</h2>
+                    <p className="text-slate-500 dark:text-slate-400">Kelola pengaturan dan preferensi akun Anda</p>
                 </div>
 
                 <div className="space-y-6">
@@ -67,14 +67,14 @@ export default function Edit({ mustVerifyEmail, status }) {
                                     {auth.user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Profile Information</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Update your account's profile information and email address.</p>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Informasi Profil</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Perbarui informasi profil dan alamat email akun Anda.</p>
                                 </div>
                             </div>
                         </div>
                         <form onSubmit={updateProfile} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Name</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nama</label>
                                 <input
                                     type="text"
                                     value={profileForm.data.name}
@@ -100,13 +100,13 @@ export default function Edit({ mustVerifyEmail, status }) {
                             {mustVerifyEmail && auth.user.email_verified_at === null && (
                                 <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
                                     <p className="text-sm">
-                                        Your email address is unverified.
+                                        Alamat email Anda belum diverifikasi.
                                         <button className="underline ml-1" onClick={() => route('verification.send')}>
-                                            Click here to resend verification email.
+                                            Klik di sini untuk mengirim ulang email verifikasi.
                                         </button>
                                     </p>
                                     {status === 'verification-link-sent' && (
-                                        <p className="mt-2 text-sm text-emerald-600">A new verification link has been sent to your email address.</p>
+                                        <p className="mt-2 text-sm text-emerald-600">Tautan verifikasi baru telah dikirim ke alamat email Anda.</p>
                                     )}
                                 </div>
                             )}
@@ -116,7 +116,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                                     disabled={profileForm.processing}
                                     className="px-6 py-2.5 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                                 >
-                                    {profileForm.processing ? 'Saving...' : 'Save Changes'}
+                                    {profileForm.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                                 </button>
                             </div>
                         </form>
@@ -125,12 +125,12 @@ export default function Edit({ mustVerifyEmail, status }) {
                     {/* Update Password */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Update Password</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Ensure your account is using a long, random password to stay secure.</p>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Perbarui Kata Sandi</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Pastikan akun Anda menggunakan kata sandi yang panjang dan acak agar tetap aman.</p>
                         </div>
                         <form onSubmit={updatePassword} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Current Password</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Kata Sandi Saat Ini</label>
                                 <input
                                     type="password"
                                     value={passwordForm.data.current_password}
@@ -142,7 +142,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">New Password</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Kata Sandi Baru</label>
                                 <input
                                     type="password"
                                     value={passwordForm.data.password}
@@ -154,7 +154,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Konfirmasi Kata Sandi</label>
                                 <input
                                     type="password"
                                     value={passwordForm.data.password_confirmation}
@@ -171,7 +171,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                                     disabled={passwordForm.processing}
                                     className="px-6 py-2.5 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                                 >
-                                    {passwordForm.processing ? 'Updating...' : 'Update Password'}
+                                    {passwordForm.processing ? 'Memperbarui...' : 'Perbarui Kata Sandi'}
                                 </button>
                             </div>
                         </form>
@@ -180,16 +180,16 @@ export default function Edit({ mustVerifyEmail, status }) {
                     {/* Delete Account */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl border border-red-200 dark:border-red-900/50 shadow-sm">
                         <div className="p-6">
-                            <h3 className="text-lg font-bold text-red-600 dark:text-red-400">Delete Account</h3>
+                            <h3 className="text-lg font-bold text-red-600 dark:text-red-400">Hapus Akun</h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">
-                                Once your account is deleted, all of its resources and data will be permanently deleted.
-                                Before deleting your account, please download any data or information that you wish to retain.
+                                Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen.
+                                Sebelum menghapus akun Anda, harap unduh data atau informasi apa pun yang ingin Anda simpan.
                             </p>
                             <button
                                 onClick={() => setShowDeleteModal(true)}
                                 className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
                             >
-                                Delete Account
+                                Hapus Akun
                             </button>
                         </div>
                     </div>
@@ -200,14 +200,14 @@ export default function Edit({ mustVerifyEmail, status }) {
             {showDeleteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Are you sure?</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Apakah Anda yakin?</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            This action cannot be undone. Please enter your password to confirm.
+                            Tindakan ini tidak dapat dibatalkan. Harap masukkan kata sandi Anda untuk konfirmasi.
                         </p>
                         <form onSubmit={deleteAccount}>
                             <input
                                 type="password"
-                                placeholder="Enter your password"
+                                placeholder="Masukkan kata sandi Anda"
                                 value={deleteForm.data.password}
                                 onChange={(e) => deleteForm.setData('password', e.target.value)}
                                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary mb-4"
@@ -221,14 +221,14 @@ export default function Edit({ mustVerifyEmail, status }) {
                                     onClick={() => setShowDeleteModal(false)}
                                     className="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 >
-                                    Cancel
+                                    Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={deleteForm.processing}
                                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                                 >
-                                    {deleteForm.processing ? 'Deleting...' : 'Delete Account'}
+                                    {deleteForm.processing ? 'Menghapus...' : 'Hapus Akun'}
                                 </button>
                             </div>
                         </form>

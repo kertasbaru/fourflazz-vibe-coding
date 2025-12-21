@@ -17,7 +17,7 @@ function CountdownTimer({ expiresAt }) {
 
             if (diff <= 0) {
                 setIsExpired(true);
-                setTimeLeft('Expired');
+                setTimeLeft('Kedaluwarsa');
                 return;
             }
 
@@ -79,7 +79,7 @@ function SessionCard({ session, onExtend, onDelete, onResend, loading }) {
                                     ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                     : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                 }`}>
-                                {session.is_active && !session.is_expired ? 'Active' : session.is_expired ? 'Expired' : 'Pending OTP'}
+                                {session.is_active && !session.is_expired ? 'Aktif' : session.is_expired ? 'Kedaluwarsa' : 'Menunggu OTP'}
                             </span>
                             <span className="text-slate-500">
                                 {session.provider.toUpperCase()}
@@ -96,7 +96,7 @@ function SessionCard({ session, onExtend, onDelete, onResend, loading }) {
                             onClick={() => onResend(session)}
                             disabled={loading}
                             className="p-2 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors disabled:opacity-50"
-                            title="Resend OTP"
+                            title="Kirim Ulang OTP"
                         >
                             <span className="material-symbols-outlined text-xl">send</span>
                         </button>
@@ -106,7 +106,7 @@ function SessionCard({ session, onExtend, onDelete, onResend, loading }) {
                             onClick={() => onExtend(session.id)}
                             disabled={loading}
                             className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
-                            title="Extend Session"
+                            title="Perpanjang Sesi"
                         >
                             <span className="material-symbols-outlined text-xl">refresh</span>
                         </button>
@@ -115,7 +115,7 @@ function SessionCard({ session, onExtend, onDelete, onResend, loading }) {
                         onClick={() => onDelete(session.id)}
                         disabled={loading}
                         className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-                        title="Delete Session"
+                        title="Hapus Sesi"
                     >
                         <span className="material-symbols-outlined text-xl">delete</span>
                     </button>
@@ -136,24 +136,24 @@ function ConfirmCloseModal({ isOpen, onConfirm, onCancel }) {
                         <span className="material-symbols-outlined text-amber-600">warning</span>
                     </div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                        Discard OTP Request?
+                        Buang Permintaan OTP?
                     </h3>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 mb-6">
-                    An OTP has been sent to your phone. If you close now, you'll need to request a new OTP.
+                    OTP telah dikirim ke ponsel Anda. Jika Anda tutup sekarang, Anda perlu meminta OTP baru.
                 </p>
                 <div className="flex gap-3">
                     <button
                         onClick={onCancel}
                         className="flex-1 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                     >
-                        Continue
+                        Lanjutkan
                     </button>
                     <button
                         onClick={onConfirm}
                         className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
-                        Discard
+                        Buang
                     </button>
                 </div>
             </div>
@@ -214,10 +214,10 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                 setStep('otp');
                 setOtpSent(true);
             } else {
-                setError(data.message || 'Failed to request OTP');
+                setError(data.message || 'Gagal meminta OTP');
             }
         } catch (e) {
-            const message = e.response?.data?.message || 'Network error. Please try again.';
+            const message = e.response?.data?.message || 'Kesalahan jaringan. Silakan coba lagi.';
             setError(message);
         } finally {
             setLoading(false);
@@ -240,10 +240,10 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                 onSuccess();
                 handleClose(true);
             } else {
-                setError(data.message || 'Invalid OTP');
+                setError(data.message || 'OTP tidak valid');
             }
         } catch (e) {
-            const message = e.response?.data?.message || 'Network error. Please try again.';
+            const message = e.response?.data?.message || 'Kesalahan jaringan. Silakan coba lagi.';
             setError(message);
         } finally {
             setLoading(false);
@@ -285,7 +285,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                 >
                     <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                            {step === 'phone' ? 'Add OTP Session' : 'Enter OTP Code'}
+                            {step === 'phone' ? 'Tambah Sesi OTP' : 'Masukkan Kode OTP'}
                         </h3>
                         <button onClick={handleCloseAttempt} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                             <span className="material-symbols-outlined">close</span>
@@ -303,7 +303,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Phone Number (XL/AXIS/LIVEON)
+                                        Nomor HP (XL/AXIS/LIVEON)
                                     </label>
                                     <input
                                         type="tel"
@@ -313,7 +313,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                                         className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                                     />
                                     <p className="mt-1 text-xs text-slate-500">
-                                        Enter your XL, AXIS, or LIVEON phone number
+                                        Masukkan nomor HP XL, AXIS, atau LIVEON Anda
                                     </p>
                                 </div>
                                 <button
@@ -322,23 +322,23 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                                     className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {loading && <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>}
-                                    Request OTP
+                                    Minta OTP
                                 </button>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    OTP code has been sent to <strong>{formatPhone(phone)}</strong>
+                                    Kode OTP telah dikirim ke <strong>{formatPhone(phone)}</strong>
                                 </p>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        OTP Code
+                                        Kode OTP
                                     </label>
                                     <input
                                         type="text"
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                                        placeholder="Enter 6-digit OTP"
+                                        placeholder="Masukkan 6 digit OTP"
                                         maxLength={6}
                                         className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
                                     />
@@ -349,18 +349,18 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                                     className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {loading && <span className="animate-spin material-symbols-outlined text-lg">progress_activity</span>}
-                                    Verify OTP
+                                    Verifikasi OTP
                                 </button>
                                 <div className="flex items-center justify-between">
                                     <button
                                         onClick={() => setStep('phone')}
                                         className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                                     >
-                                        ← Change number
+                                        ← Ubah nomor
                                     </button>
                                     {canResendIn > 0 ? (
                                         <span className="text-sm text-slate-500">
-                                            Resend in {canResendIn}s
+                                            Kirim ulang dalam {canResendIn}d
                                         </span>
                                     ) : (
                                         <button
@@ -368,7 +368,7 @@ function AddSessionModal({ isOpen, onClose, onSuccess }) {
                                             disabled={loading}
                                             className="text-sm text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
                                         >
-                                            Resend OTP
+                                            Kirim Ulang OTP
                                         </button>
                                     )}
                                 </div>
@@ -399,10 +399,10 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
             if (data.success) {
                 router.reload({ only: ['sessions'] });
             } else {
-                alert(data.message || 'Failed to extend session');
+                alert(data.message || 'Gagal memperpanjang sesi');
             }
         } catch (e) {
-            const message = e.response?.data?.message || 'Network error';
+            const message = e.response?.data?.message || 'Kesalahan jaringan';
             alert(message);
         } finally {
             setLoading(false);
@@ -410,7 +410,7 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
     };
 
     const deleteSession = async (id) => {
-        if (!confirm('Are you sure you want to delete this session?')) return;
+        if (!confirm('Apakah Anda yakin ingin menghapus sesi ini?')) return;
 
         setLoading(true);
         try {
@@ -419,10 +419,10 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
             if (data.success) {
                 router.reload({ only: ['sessions'] });
             } else {
-                alert(data.message || 'Failed to delete session');
+                alert(data.message || 'Gagal menghapus sesi');
             }
         } catch (e) {
-            const message = e.response?.data?.message || 'Network error';
+            const message = e.response?.data?.message || 'Kesalahan jaringan';
             alert(message);
         } finally {
             setLoading(false);
@@ -439,12 +439,12 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
             const data = response.data;
             if (data.success) {
                 router.reload({ only: ['sessions'] });
-                alert('OTP has been resent. Please check your phone.');
+                alert('OTP telah dikirim ulang. Silakan cek HP Anda.');
             } else {
-                alert(data.message || 'Failed to resend OTP');
+                alert(data.message || 'Gagal mengirim ulang OTP');
             }
         } catch (e) {
-            const message = e.response?.data?.message || 'Network error';
+            const message = e.response?.data?.message || 'Kesalahan jaringan';
             alert(message);
         } finally {
             setLoading(false);
@@ -460,10 +460,10 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
                 router.reload({ only: ['sessions'] });
                 alert(data.message);
             } else {
-                alert(data.message || 'Failed to sync sessions');
+                alert(data.message || 'Gagal sinkronisasi sesi');
             }
         } catch (e) {
-            const message = e.response?.data?.message || 'Network error';
+            const message = e.response?.data?.message || 'Kesalahan jaringan';
             alert(message);
         } finally {
             setLoading(false);
@@ -472,15 +472,15 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
 
     return (
         <DashboardLayout>
-            <Head title="OTP Sessions" />
+            <Head title="Sesi OTP" />
 
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">OTP Sessions</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sesi OTP</h1>
                         <p className="text-slate-500 dark:text-slate-400">
-                            Manage your XL/AXIS login sessions for purchasing products
+                            Kelola sesi login XL/AXIS Anda untuk membeli produk
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -491,7 +491,7 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
                                 className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
                             >
                                 <span className="material-symbols-outlined text-lg">sync</span>
-                                Sync
+                                Sinkronisasi
                             </button>
                         )}
                         <button
@@ -499,7 +499,7 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
                             className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                         >
                             <span className="material-symbols-outlined text-lg">add</span>
-                            Add Session
+                            Tambah Sesi
                         </button>
                     </div>
                 </div>
@@ -509,8 +509,8 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
                     <div className="flex gap-3">
                         <span className="material-symbols-outlined text-blue-600">info</span>
                         <div className="text-sm text-blue-800 dark:text-blue-300">
-                            <p className="font-medium mb-1">What are OTP Sessions?</p>
-                            <p>Some products require you to login with your XL/AXIS account. Add a session by entering your phone number and verifying with the OTP code sent via SMS.</p>
+                            <p className="font-medium mb-1">Apa itu Sesi OTP?</p>
+                            <p>Beberapa produk mengharuskan Anda login dengan akun XL/AXIS. Tambahkan sesi dengan memasukkan nomor HP Anda dan verifikasi dengan kode OTP yang dikirim via SMS.</p>
                         </div>
                     </div>
                 </div>
@@ -531,8 +531,8 @@ export default function OtpSessionsIndex({ sessions, isAdmin }) {
                     ) : (
                         <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                             <span className="material-symbols-outlined text-4xl mb-2">phone_locked</span>
-                            <p>No OTP sessions yet</p>
-                            <p className="text-sm">Add a session to purchase products that require login</p>
+                            <p>Belum ada sesi OTP</p>
+                            <p className="text-sm">Tambahkan sesi untuk membeli produk yang memerlukan login</p>
                         </div>
                     )}
                 </div>

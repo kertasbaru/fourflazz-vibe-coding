@@ -206,7 +206,7 @@ export default function AdminTransactionsIndex({ transactions, stats, filters })
 
     return (
         <AdminLayout>
-            <Head title="All Transactions" />
+            <Head title="Semua Transaksi" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 <div>

@@ -377,7 +377,7 @@ export default function ProvidersIndex({ providers }) {
 
     return (
         <AdminLayout>
-            <Head title="API Providers" />
+            <Head title="Penyedia API" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 {/* Header */}

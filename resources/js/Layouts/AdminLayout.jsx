@@ -26,15 +26,15 @@ export default function AdminLayout({ children }) {
     };
 
     const navigation = [
-        { name: 'Dashboard', href: route('admin.dashboard'), icon: 'dashboard', current: route().current('admin.dashboard') },
-        { name: 'Products', href: route('admin.products.index'), icon: 'inventory_2', current: route().current('admin.products.*') },
-        { name: 'Categories', href: route('admin.categories.index'), icon: 'category', current: route().current('admin.categories.*') },
-        { name: 'Users', href: route('admin.users.index'), icon: 'group', current: route().current('admin.users.*') },
-        { name: 'Transactions', href: route('admin.transactions.index'), icon: 'receipt_long', current: route().current('admin.transactions.*') },
-        { name: 'API Providers', href: route('admin.providers.index'), icon: 'cloud_sync', current: route().current('admin.providers.*') },
-        { name: 'API Logs', href: route('admin.api-logs.index'), icon: 'history', current: route().current('admin.api-logs.*') },
-        { name: 'System Logs', href: route('admin.logs.index'), icon: 'terminal', current: route().current('admin.logs.*') },
-        { name: 'Settings', href: route('admin.settings.index'), icon: 'settings', current: route().current('admin.settings.*') },
+        { name: 'Dasbor', href: route('admin.dashboard'), icon: 'dashboard', current: route().current('admin.dashboard') },
+        { name: 'Produk', href: route('admin.products.index'), icon: 'inventory_2', current: route().current('admin.products.*') },
+        { name: 'Kategori', href: route('admin.categories.index'), icon: 'category', current: route().current('admin.categories.*') },
+        { name: 'Pengguna', href: route('admin.users.index'), icon: 'group', current: route().current('admin.users.*') },
+        { name: 'Transaksi', href: route('admin.transactions.index'), icon: 'receipt_long', current: route().current('admin.transactions.*') },
+        { name: 'Penyedia API', href: route('admin.providers.index'), icon: 'cloud_sync', current: route().current('admin.providers.*') },
+        { name: 'Log API', href: route('admin.api-logs.index'), icon: 'history', current: route().current('admin.api-logs.*') },
+        { name: 'Log Sistem', href: route('admin.logs.index'), icon: 'terminal', current: route().current('admin.logs.*') },
+        { name: 'Pengaturan', href: route('admin.settings.index'), icon: 'settings', current: route().current('admin.settings.*') },
     ];
 
     return (
@@ -85,7 +85,7 @@ export default function AdminLayout({ children }) {
                             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                         >
                             <span className="material-symbols-outlined text-[22px]">arrow_back</span>
-                            <span className="text-sm font-medium">Back to App</span>
+                            <span className="text-sm font-medium">Kembali ke Aplikasi</span>
                         </Link>
                     </nav>
 
@@ -98,7 +98,7 @@ export default function AdminLayout({ children }) {
                             <span className="material-symbols-outlined text-[22px]">
                                 {darkMode ? 'light_mode' : 'dark_mode'}
                             </span>
-                            <span className="text-sm font-medium">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                            <span className="text-sm font-medium">{darkMode ? 'Mode Terang' : 'Mode Gelap'}</span>
                         </button>
                         <div className="flex items-center gap-3 mt-4 px-3">
                             <div className="size-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-white text-sm font-semibold">

@@ -18,7 +18,7 @@ export default function AdminCategoriesIndex({ categories, filters }) {
 
     return (
         <AdminLayout>
-            <Head title="Manage Categories" />
+            <Head title="Kelola Kategori" />
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -84,8 +84,8 @@ export default function AdminCategoriesIndex({ categories, filters }) {
                                             </td>
                                             <td className="py-4 px-4">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${category.is_active
-                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
                                                     }`}>
                                                     {category.is_active ? 'Active' : 'Inactive'}
                                                 </span>
