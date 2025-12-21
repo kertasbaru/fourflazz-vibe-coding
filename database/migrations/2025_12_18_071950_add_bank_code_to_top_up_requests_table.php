@@ -11,11 +11,13 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('top_up_requests', function (Blueprint $table) {
-            if (!Schema::hasColumn('top_up_requests', 'bank_code')) {
-                $table->string('bank_code')->nullable()->after('payment_code');
-            }
+            // Add payment_code first
             if (!Schema::hasColumn('top_up_requests', 'payment_code')) {
                 $table->string('payment_code')->nullable()->after('payment_method');
+            }
+            // Then add bank_code after payment_code
+            if (!Schema::hasColumn('top_up_requests', 'bank_code')) {
+                $table->string('bank_code')->nullable()->after('payment_code');
             }
         });
     }
