@@ -5,6 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout';
 
 export default function SettingsIndex({ settings }) {
     const [margin, setMargin] = useState(settings.product_margin || 10);
+    const [minTopUp, setMinTopUp] = useState(settings.min_topup_amount || 10000);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -22,6 +23,7 @@ export default function SettingsIndex({ settings }) {
         try {
             const response = await axios.post(route('admin.settings.update'), {
                 product_margin: parseFloat(margin),
+                min_topup_amount: parseFloat(minTopUp),
             });
 
             if (response.data.success) {
@@ -146,6 +148,26 @@ export default function SettingsIndex({ settings }) {
                                         Margin ini akan diterapkan saat sinkronisasi produk dari provider API (KMSP, KAJE, dll).
                                         <br />
                                         Contoh: Jika margin 10%, produk dengan harga Rp 10.000 akan memiliki harga jual Rp 11.000.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Minimum Top-Up (Rp)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={minTopUp}
+                                        onChange={(e) => setMinTopUp(e.target.value)}
+                                        step="1"
+                                        min="1"
+                                        max="100000000"
+                                        className="w-full md:w-64 h-12 px-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-slate-900 dark:text-white"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        Nilai minimum untuk top-up via QRIS. Mendukung hingga Rp 1.
+                                        <br />
+                                        Catatan: Kode unik akan ditambahkan ke saldo user (termasuk dalam balance).
                                     </p>
                                 </div>
 

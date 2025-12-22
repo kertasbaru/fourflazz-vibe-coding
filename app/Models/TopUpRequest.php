@@ -100,12 +100,12 @@ class TopUpRequest extends Model
             'status' => self::STATUS_PAID,
             'payment_transaction_id' => $transactionId ?: $this->payment_transaction_id,
             'balance_before' => $user->balance,
-            'balance_after' => $user->balance + $this->amount,
+            'balance_after' => $user->balance + $this->total_amount, // Use total_amount (includes unique code)
             'paid_at' => now(),
             'payment_response' => array_merge($this->payment_response ?? [], $response),
         ]);
 
-        $user->addBalance($this->amount);
+        $user->addBalance($this->total_amount); // Credit total amount including unique code
     }
 
     /**

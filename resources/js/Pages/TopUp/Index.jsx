@@ -2,18 +2,25 @@ import { Head, usePage } from '@inertiajs/react';
 import { useState, useRef } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-const presetAmounts = [
-    { value: 50000, label: 'Rp 50.000' },
-    { value: 100000, label: 'Rp 100.000' },
-    { value: 200000, label: 'Rp 200.000' },
-    { value: 500000, label: 'Rp 500.000' },
-    { value: 1000000, label: 'Rp 1.000.000' },
-    { value: 2000000, label: 'Rp 2.000.000' },
-];
-
-export default function TopUpIndex({ topUpRequests, balance, formattedBalance }) {
+export default function TopUpIndex({ topUpRequests, balance, formattedBalance, minTopUp = 10000 }) {
     const { flash } = usePage().props;
-    const [selectedAmount, setSelectedAmount] = useState(100000);
+
+    // Generate preset amounts based on minimum
+    const allPresetAmounts = [
+        { value: 1, label: 'Rp 1' },
+        { value: 10000, label: 'Rp 10.000' },
+        { value: 50000, label: 'Rp 50.000' },
+        { value: 100000, label: 'Rp 100.000' },
+        { value: 200000, label: 'Rp 200.000' },
+        { value: 500000, label: 'Rp 500.000' },
+        { value: 1000000, label: 'Rp 1.000.000' },
+        { value: 2000000, label: 'Rp 2.000.000' },
+    ];
+
+    // Filter to only show amounts >= minTopUp, take max 6 options
+    const presetAmounts = allPresetAmounts.filter(preset => preset.value >= minTopUp).slice(0, 6);
+
+    const [selectedAmount, setSelectedAmount] = useState(presetAmounts.length > 0 ? presetAmounts[0].value : minTopUp);
     const [customAmount, setCustomAmount] = useState('');
     const [isCustom, setIsCustom] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -52,8 +59,8 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance })
     const handleTopUp = async () => {
         const amount = isCustom ? parseInt(customAmount) : selectedAmount;
 
-        if (!amount || amount < 10000) {
-            setError('Minimum top up Rp 10.000');
+        if (!amount || amount < minTopUp) {
+            setError(`Jumlah minimum top-up adalah Rp ${minTopUp.toLocaleString('id-ID')}`);
             return;
         }
 
@@ -345,8 +352,8 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance })
                                     key={preset.value}
                                     onClick={() => handleAmountSelect(preset.value)}
                                     className={`py-3 px-4 rounded-xl border transition-all ${selectedAmount === preset.value && !isCustom
-                                            ? 'border-primary bg-primary/5 text-primary font-bold ring-2 ring-primary/20 shadow-sm'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 text-slate-600 dark:text-slate-300 hover:shadow-sm'
+                                        ? 'border-primary bg-primary/5 text-primary font-bold ring-2 ring-primary/20 shadow-sm'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 text-slate-600 dark:text-slate-300 hover:shadow-sm'
                                         }`}
                                 >
                                     {preset.label}
@@ -364,16 +371,16 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance })
                                     type="text"
                                     value={isCustom ? customAmount : (presetAmounts.find(p => p.value === selectedAmount) ? '' : selectedAmount)}
                                     onChange={handleCustomAmountChange}
-                                    placeholder="Min. 10.000"
+                                    placeholder={`Min. ${minTopUp.toLocaleString('id-ID')}`}
                                     className={`w-full pl-12 pr-4 py-4 border rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm ${isCustom && selectedAmount >= 10000
-                                            ? 'border-primary ring-2 ring-primary/20'
-                                            : 'border-slate-200 dark:border-slate-700'
+                                        ? 'border-primary ring-2 ring-primary/20'
+                                        : 'border-slate-200 dark:border-slate-700'
                                         }`}
                                 />
                             </div>
                             <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
                                 <span className="material-symbols-outlined text-[14px]">info</span>
-                                Minimum top up Rp 10.000
+                                Minimum top up Rp {minTopUp.toLocaleString('id-ID')}
                             </p>
                         </div>
 
@@ -386,7 +393,7 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance })
 
                         <button
                             onClick={handleTopUp}
-                            disabled={loading || !selectedAmount || selectedAmount < 10000}
+                            disabled={loading || !selectedAmount || selectedAmount < minTopUp}
                             className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group relative overflow-hidden"
                         >
                             <span className="relative z-10 flex items-center gap-2">

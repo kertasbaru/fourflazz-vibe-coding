@@ -20,6 +20,7 @@ class SettingsController extends Controller
 
         $settings = [
             'product_margin' => Setting::get('product_margin', 10),
+            'min_topup_amount' => Setting::get('min_topup_amount', 10000),
             'qr_topup_image' => $qrImagePath ? asset('storage/' . $qrImagePath) : null,
             'qr_topup_image_path' => $qrImagePath,
         ];
@@ -36,9 +37,11 @@ class SettingsController extends Controller
     {
         $validated = $request->validate([
             'product_margin' => 'required|numeric|min:0|max:1000',
+            'min_topup_amount' => 'required|numeric|min:1|max:100000000',
         ]);
 
         Setting::set('product_margin', $validated['product_margin'], 'float');
+        Setting::set('min_topup_amount', $validated['min_topup_amount'], 'float');
 
         return response()->json([
             'success' => true,

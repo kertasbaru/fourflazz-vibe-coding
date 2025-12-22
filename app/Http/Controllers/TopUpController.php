@@ -27,10 +27,13 @@ class TopUpController extends Controller
         // Get available payment channels
         $channels = $this->sanPayService->getChannels();
 
+        $minTopUp = \App\Models\Setting::get('min_topup_amount', 10000);
+
         return Inertia::render('TopUp/Index', [
             'topUpRequests' => $topUpRequests,
             'balance' => $user->balance,
             'formattedBalance' => $user->formatted_balance,
+            'minTopUp' => $minTopUp,
             'vaChannels' => $channels['va_channels'] ?? [],
             'retailChannels' => $channels['retail_channels'] ?? [],
         ]);
@@ -41,8 +44,10 @@ class TopUpController extends Controller
      */
     public function createTopUp(Request $request)
     {
+        $minTopUp = \App\Models\Setting::get('min_topup_amount', 10000);
+
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:10000|max:10000000'
+            'amount' => "required|numeric|min:{$minTopUp}|max:10000000"
         ]);
 
         $user = $request->user();
