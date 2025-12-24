@@ -139,6 +139,9 @@ Route::prefix('admin')
         Route::post('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
         Route::post('settings/upload-qr', [Admin\SettingsController::class, 'uploadQrCode'])->name('settings.upload-qr');
         Route::delete('settings/delete-qr', [Admin\SettingsController::class, 'deleteQrCode'])->name('settings.delete-qr');
+        Route::post('settings/qris-mode', [Admin\SettingsController::class, 'updateQrisMode'])->name('settings.update-qris-mode');
+        Route::post('settings/qris-data', [Admin\SettingsController::class, 'updateQrisData'])->name('settings.update-qris-data');
+        Route::post('settings/parse-qris', [Admin\SettingsController::class, 'parseQrisString'])->name('settings.parse-qris');
 
         // API Logs
         Route::get('api-logs', [Admin\ApiLogController::class, 'index'])->name('api-logs.index');

@@ -67,11 +67,21 @@ class TopUpController extends Controller
             'status' => TopUpRequest::STATUS_PENDING
         ]);
 
-        // Get QR code path from settings or use default
-        $qrImagePath = \App\Models\Setting::get('qr_topup_image', null);
-        $qrCodeUrl = $qrImagePath
-            ? asset('storage/' . $qrImagePath)
-            : asset('images/qr-topup.png');
+        // Try to generate dynamic QRIS QR code
+        $dynamicQrCode = \App\Services\QrisGenerator::generateDynamicQr($totalAmount);
+
+        // If dynamic QRIS is available, use it
+        if ($dynamicQrCode) {
+            $qrCodeUrl = $dynamicQrCode;
+            $qrType = 'dynamic';
+        } else {
+            // Fall back to static QR code from settings or default
+            $qrImagePath = \App\Models\Setting::get('qr_topup_image', null);
+            $qrCodeUrl = $qrImagePath
+                ? asset('storage/' . $qrImagePath)
+                : asset('images/qr-topup.png');
+            $qrType = 'static';
+        }
 
         return response()->json([
             'success' => true,
@@ -81,7 +91,8 @@ class TopUpController extends Controller
                 'unique_code' => str_pad($uniqueCode, 3, '0', STR_PAD_LEFT),
                 'total_amount' => $totalAmount,
                 'formatted_total' => number_format($totalAmount, 0, ',', '.'),
-                'qr_code' => $qrCodeUrl
+                'qr_code' => $qrCodeUrl,
+                'qr_type' => $qrType
             ]
         ]);
     }

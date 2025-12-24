@@ -53,6 +53,7 @@ class Setting extends Model
             'int' => (int) $value,
             'float' => (float) $value,
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'json' => json_decode($value, true),
             default => $value,
         };
     }

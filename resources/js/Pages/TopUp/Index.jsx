@@ -166,7 +166,8 @@ export default function TopUpIndex({ topUpRequests, balance, formattedBalance, m
             unique_code: request.unique_code,
             total_amount: request.total_amount,
             formatted_total: new Intl.NumberFormat('id-ID').format(request.total_amount),
-            qr_code: '/images/qr-topup.png'
+            qr_code: request.qr_code || '/images/qr-topup.png', // Use QR from backend or fallback
+            qr_type: request.qr_type || 'static'
         });
 
         if (request.payment_proof) {

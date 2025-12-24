@@ -17,12 +17,16 @@ class SettingsController extends Controller
     public function index(): Response
     {
         $qrImagePath = Setting::get('qr_topup_image', null);
+        $qrisData = Setting::get('qris_data', []);
 
         $settings = [
             'product_margin' => Setting::get('product_margin', 10),
             'min_topup_amount' => Setting::get('min_topup_amount', 10000),
             'qr_topup_image' => $qrImagePath ? asset('storage/' . $qrImagePath) : null,
             'qr_topup_image_path' => $qrImagePath,
+            'qris_mode' => Setting::get('qris_mode', 'static'),
+            'qris_data' => $qrisData,
+            'qris_labels' => !empty($qrisData) ? \App\Services\QrisParser::getLabels($qrisData) : null,
         ];
 
         return Inertia::render('Admin/Settings/Index', [
@@ -109,6 +113,82 @@ class SettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menghapus QR Code',
+            ], 500);
+        }
+    }
+
+    /**
+     * Update QRIS mode (static or dynamic).
+     */
+    public function updateQrisMode(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'mode' => 'required|in:static,dynamic',
+        ]);
+
+        Setting::set('qris_mode', $validated['mode'], 'string');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mode QRIS berhasil diperbarui',
+        ]);
+    }
+
+    /**
+     * Update QRIS dynamic data.
+     */
+    public function updateQrisData(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'qris_data' => 'required|array',
+        ]);
+
+        Setting::set('qris_data', json_encode($validated['qris_data']), 'json');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data QRIS berhasil disimpan',
+        ]);
+    }
+
+    /**
+     * Parse QRIS string and return structured data.
+     */
+    public function parseQrisString(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'qris_string' => 'required|string',
+        ]);
+
+        try {
+            $qrisString = trim($validated['qris_string']);
+
+            // Validate CRC
+            if (!\App\Services\QrisParser::validateCrc($qrisString)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'QRIS string tidak valid (CRC checksum mismatch)',
+                ], 422);
+            }
+
+            // Parse QRIS string
+            $parsedData = \App\Services\QrisParser::parse($qrisString);
+            $labels = \App\Services\QrisParser::getLabels($parsedData);
+
+            // Save the base QRIS string for dynamic QR generation
+            Setting::set('qris_base_string', $qrisString, 'string');
+
+            return response()->json([
+                'success' => true,
+                'data' => $parsedData,
+                'labels' => $labels,
+                'message' => 'QRIS berhasil diparsing',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('QRIS parsing error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses QRIS string: ' . $e->getMessage(),
             ], 500);
         }
     }

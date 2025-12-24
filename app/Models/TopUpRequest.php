@@ -50,6 +50,11 @@ class TopUpRequest extends Model
         'payment_response' => 'array',
     ];
 
+    protected $appends = [
+        'qr_code',
+        'qr_type',
+    ];
+
     /**
      * Get the user who made this request.
      */
@@ -138,6 +143,36 @@ class TopUpRequest extends Model
             self::TYPE_RETAIL => $this->bank_code ?? 'Retail',
             default => $this->payment_method ?? '-',
         };
+    }
+
+    /**
+     * Get QR code for this top-up request based on settings.
+     */
+    public function getQrCodeAttribute(): string
+    {
+        // Try to generate dynamic QRIS if configured
+        $dynamicQr = \App\Services\QrisGenerator::generateDynamicQr((float) $this->total_amount);
+
+        if ($dynamicQr) {
+            return $dynamicQr;
+        }
+
+        // Fall back to static QR code
+        $qrImagePath = \App\Models\Setting::get('qr_topup_image', null);
+
+        if ($qrImagePath) {
+            return asset('storage/' . $qrImagePath);
+        }
+
+        return asset('images/qr-topup.png');
+    }
+
+    /**
+     * Get QR type (static or dynamic).
+     */
+    public function getQrTypeAttribute(): string
+    {
+        return \App\Services\QrisGenerator::isDynamicQrisAvailable() ? 'dynamic' : 'static';
     }
 
     /**
