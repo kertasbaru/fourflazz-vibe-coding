@@ -57,7 +57,7 @@ class Transaction extends Model
     {
         $prefix = 'TRX';
         $date = now()->format('Ymd');
-        $random = strtoupper(substr(md5(uniqid()), 0, 6));
+        $random = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
         return "{$prefix}{$date}{$random}";
     }
 

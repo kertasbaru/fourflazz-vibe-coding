@@ -53,7 +53,7 @@ class TopUpController extends Controller
         $user = $request->user();
 
         // Generate unique code (001-999)
-        $uniqueCode = rand(1, 999);
+        $uniqueCode = random_int(1, 999);
         $totalAmount = $validated['amount'] + $uniqueCode;
 
         // Create top-up request
