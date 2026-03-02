@@ -44,7 +44,7 @@ class OtpSessionController extends Controller
 
         return Inertia::render('OtpSessions/Index', [
             'sessions' => $sessions,
-            'isAdmin' => Auth::user()->is_admin ?? false,
+            'isAdmin' => Auth::user()->isAdmin(),
         ]);
     }
 

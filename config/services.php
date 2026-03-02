@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'webhook' => [
+        'api_key' => env('WEBHOOK_API_KEY'),
+    ],
+
 ];

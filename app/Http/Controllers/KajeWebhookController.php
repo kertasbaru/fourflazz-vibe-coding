@@ -22,6 +22,30 @@ class KajeWebhookController extends Controller
         $startTime = microtime(true);
         $rawBody = $request->getContent();
 
+        // Security Check: Verify API key from Authorization header
+        $authHeader = $request->header('Authorization');
+        $providedKey = null;
+        if ($authHeader) {
+            $providedKey = str_starts_with($authHeader, 'Bearer ')
+                ? substr($authHeader, 7)
+                : $authHeader;
+        }
+
+        $validApiKey = config('providers.kaje.api_key');
+        if (!empty($validApiKey) && $providedKey !== $validApiKey) {
+            Log::warning('KAJE Webhook unauthorized attempt', [
+                'ip' => $request->ip(),
+                'auth_header' => $authHeader ? 'present' : 'missing',
+            ]);
+
+            $this->logWebhook($request, null, null, false, 'Unauthorized: Invalid API Key', $startTime);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
         // Log raw request for debugging
         Log::info('KAJE Webhook Raw Request', [
             'raw_body' => $rawBody,
@@ -201,7 +225,7 @@ class KajeWebhookController extends Controller
                 'transaction_id' => $transaction->id,
                 'reference_number' => $transaction->reference_number,
                 'status' => $status,
-                'product_name' => $transaction->product->name ?? 'Unknown',
+                'product_name' => $transaction->product?->name ?? 'Unknown',
                 'amount' => $transaction->amount,
             ],
             'read_at' => null,

@@ -16,11 +16,10 @@ class WebhookController extends Controller
     {
         // Security Check: API Key
         $apiKey = $request->input('api_key');
-        // Fallback to empty string if env not set to prevent null === null bypass if that were possible (though it's not)
-        $validApiKey = env('WEBHOOK_API_KEY');
+        $validApiKey = config('services.webhook.api_key');
 
         if (empty($validApiKey)) {
-            Log::error('WEBHOOK_API_KEY is not set in .env');
+            Log::error('WEBHOOK_API_KEY is not set in config');
             return response()->json([
                 'success' => false,
                 'message' => 'Server Configuration Error: API Key not set'
@@ -115,10 +114,10 @@ class WebhookController extends Controller
         try {
             // Security Check: API Key from Authorization header
             $authHeader = $request->header('Authorization');
-            $validApiKey = env('WEBHOOK_API_KEY');
+            $validApiKey = config('services.webhook.api_key');
 
             if (empty($validApiKey)) {
-                $errorMessage = 'WEBHOOK_API_KEY is not set in .env';
+                $errorMessage = 'WEBHOOK_API_KEY is not set in config';
                 Log::error($errorMessage);
 
                 $responseData = [
